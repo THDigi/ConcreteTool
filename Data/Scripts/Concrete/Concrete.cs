@@ -39,6 +39,10 @@ namespace Digi.Concrete
         private IMyEntity cursor = null;
         private IMyHudNotification toolStatus = null;
         
+        private bool lastTrigger;
+        private long lastShotTime = 0;
+        private Color prevCrosshairColor;
+        
         private MyVoxelMaterialDefinition material = null;
         private MyStorageDataCache cache = new MyStorageDataCache();
         private HashSet<IMyEntity> ents = new HashSet<IMyEntity>();
@@ -61,7 +65,10 @@ namespace Digi.Concrete
         private const long DELAY_SHOOT = (TimeSpan.TicksPerMillisecond * 100);
         
         private static readonly Vector4 BOX_COLOR = new Vector4(0.0f, 0.0f, 1.0f, 0.05f);
-        private static readonly Vector3 MISSILE_SIZE = new Vector3(0.001, 0.001, 0.001);
+        
+        private static Color CROSSHAIR_INVALID = new Color(255, 0, 0);
+        private static Color CROSSHAIR_VALID = new Color(0, 255, 0);
+        private static Color CROSSHAIR_BLOCKED = new Color(255, 255, 0);
         
         public void Init()
         {
@@ -189,9 +196,6 @@ namespace Digi.Concrete
             voxelPackets.Enqueue(String.Format("{0};{1};{2};{3}", pos.X, pos.Y, pos.Z, asteroidName));
         }
         
-        bool lastTrigger;
-        long lastShotTime = 0;
-        
         public override void UpdateAfterSimulation()
         {
             if(!init)
@@ -250,9 +254,17 @@ namespace Digi.Concrete
             }
         }
         
+        private void SetCrosshairColor(Color color)
+        {
+            if(Sandbox.Game.Gui.MyHud.Crosshair.Color != color)
+                Sandbox.Game.Gui.MyHud.Crosshair.Color = color;
+        }
+        
         public void DrawTool()
         {
             holdingTool = true;
+            
+            prevCrosshairColor = Sandbox.Game.Gui.MyHud.Crosshair.Color;
             
             if(toolStatus == null)
             {
@@ -266,25 +278,30 @@ namespace Digi.Concrete
             IMyVoxelBase asteroid = GetAsteroidAt(MyAPIGateway.Session.Player.GetPosition());
             bool placed = false;
             
+            SetCrosshairColor(CROSSHAIR_INVALID);
+            
             if(asteroid == null)
             {
                 UpdateCursorAt(null);
-            }
-            else
-            {
-                placed = ScanAndTrigger(asteroid, trigger, 4.0f);
-            }
-            
-            if(trigger)
-            {
-                if(!placed)
+                
+                if(trigger)
                 {
                     toolStatus.Font = MyFontEnum.Red;
                     toolStatus.Text = "Concrete can only be placed on asteroids!"; // TODO add word 'planets' when those are relevant
                     toolStatus.AliveTime = 1500;
                     toolStatus.Show();
                 }
-                else if(!MyAPIGateway.Session.CreativeMode)
+            }
+            else
+            {
+                placed = ScanAndTrigger(asteroid, trigger, 4.0f);
+            }
+            
+            if(trigger && placed)
+            {
+                toolStatus.Hide();
+                
+                if(!MyAPIGateway.Session.CreativeMode)
                 {
                     // expend the ammo manually
                     var player = MyAPIGateway.Session.Player.Controller.ControlledEntity.Entity;
@@ -297,6 +314,11 @@ namespace Digi.Concrete
         public void HolsterTool()
         {
             holdingTool = false;
+            
+            if(prevCrosshairColor != null)
+            {
+                SetCrosshairColor(prevCrosshairColor);
+            }
             
             if(toolStatus != null)
             {
@@ -332,6 +354,8 @@ namespace Digi.Concrete
                     UpdateCursorAt(null);
                     return false;
                 }
+                
+                SetCrosshairColor(CROSSHAIR_VALID);
                 
                 if(trigger && !IsTargetBlocked(target))
                 {
@@ -530,10 +554,13 @@ namespace Digi.Concrete
                     MyAPIGateway.Entities.EnableEntityBoundingBoxDraw(ent, true, BOX_COLOR, 0.5f, null);
                 }
                 
+                SetCrosshairColor(CROSSHAIR_BLOCKED);
+                
                 toolStatus.Font = MyFontEnum.Red;
                 toolStatus.Text = (ents.Count == 1 ? (you ? "You're in the way!" : "Something is in the way!") : (you ? "You and " + (ents.Count-1) : "" + ents.Count) + " things are in the way!");
                 toolStatus.AliveTime = 1500;
                 toolStatus.Show();
+                
                 return true;
             }
             
