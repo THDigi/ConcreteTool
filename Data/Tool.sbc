@@ -10,7 +10,7 @@
       <NoAmmoSoundName>HudUnable</NoAmmoSoundName>
       <DeviateShotAngle>0</DeviateShotAngle>
       <ReleaseTimeAfterFire>500</ReleaseTimeAfterFire>
-      <MuzzleFlashLifeSpan>0</MuzzleFlashLifeSpan>
+      <MuzzleFlashLifeSpan>-1</MuzzleFlashLifeSpan>
       <AmmoMagazines>
         <AmmoMagazine Subtype="ConcreteMix" />
       </AmmoMagazines>

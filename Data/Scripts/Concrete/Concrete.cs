@@ -13,6 +13,7 @@ using Sandbox.Definitions;
 using Sandbox.Engine;
 using Sandbox.Engine.Physics;
 using Sandbox.Engine.Multiplayer;
+using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces;
 using VRage.Common.Utils;
@@ -44,7 +45,7 @@ namespace Digi.Concrete
         private Color prevCrosshairColor;
         
         private MyVoxelMaterialDefinition material = null;
-        private MyStorageDataCache cache = new MyStorageDataCache();
+        private MyStorageData cache = new MyStorageData();
         private HashSet<IMyEntity> ents = new HashSet<IMyEntity>();
         private Queue<string> voxelPackets = new Queue<string>();
         
@@ -54,9 +55,8 @@ namespace Digi.Concrete
         
         public const string CONCRETE_MATERIAL = "Concrete";
         public const string CONCRETE_TOOL = "ConcreteTool";
-        public const string CONCRETE_AMMO_NAME = "Concrete Mix";
         public const string CONCRETE_AMMO_ID = "ConcreteMix";
-        public const string CONCRETE_AMMO_TYPEID = "MyObjectBuilder_AmmoMagazine/ConcreteMix";
+        public const string CONCRETE_GHOST_ID = "ConcreteToolGhost";
         private static MyObjectBuilder_AmmoMagazine CONCRETE_MAG = new MyObjectBuilder_AmmoMagazine() { SubtypeName = CONCRETE_AMMO_ID, ProjectilesCount = 1 };
         
         private const int SKIP_TICKS_CLEAN = 30;
@@ -231,13 +231,13 @@ namespace Digi.Concrete
                         HoldingTool(lastTrigger ? false : trigger);
                         lastTrigger = trigger;
                         
-                        // always add the shot ammo back
                         if(tool.GunBase.LastShootTime > lastShotTime)
                         {
                             lastShotTime = tool.GunBase.LastShootTime;
                             
                             if(!MyAPIGateway.Session.CreativeMode)
                             {
+                                // always add the shot ammo back
                                 var inv = ((IMyInventoryOwner)player).GetInventory(0) as Sandbox.ModAPI.IMyInventory;
                                 inv.AddItems((MyFixedPoint)1, CONCRETE_MAG);
                             }
@@ -286,10 +286,8 @@ namespace Digi.Concrete
                 
                 if(trigger)
                 {
-                    toolStatus.Font = MyFontEnum.Red;
-                    toolStatus.Text = "Concrete can only be placed on asteroids!"; // TODO add word 'planets' when those are relevant
-                    toolStatus.AliveTime = 1500;
-                    toolStatus.Show();
+                    // TODO add word 'planets' when those are relevant
+                    SetToolStatus("Concrete can only be placed on asteroids!", MyFontEnum.Red, 1500);
                 }
             }
             else
@@ -332,58 +330,81 @@ namespace Digi.Concrete
             }
         }
         
+        private void SetToolStatus(string text, MyFontEnum font, int aliveTime = 300)
+        {
+            toolStatus.Font = font;
+            toolStatus.Text = text;
+            toolStatus.AliveTime = aliveTime;
+            toolStatus.Show();
+        }
+        
         private bool ScanAndTrigger(IMyVoxelBase voxels, bool trigger, float meters, bool first = true)
         {
-            Vector3D target = GetTargetAt(meters);
-            Vector3I pos = AdjustTargetForAsteroid(voxels, ref target);
-            UpdateCursorAt(target, voxels);
-            byte voxel = GetAsteroidVoxel(voxels, pos);
-            
-            if(voxel == 0 || voxel < VOXEL_OVERWRITE)
+            if(voxels is MyPlanet) // planets
             {
-                if(meters == 4.0f)
-                {
-                    if(trigger)
-                    {
-                        toolStatus.Font = MyFontEnum.Red;
-                        toolStatus.Text = "Aim closer to the surface.";
-                        toolStatus.AliveTime = 1500;
-                        toolStatus.Show();
-                    }
-                    
-                    UpdateCursorAt(null);
-                    return false;
-                }
+                var target = GetTargetAt(3);
+                var planet = voxels as MyPlanet;
+                var gravityCenter = planet.WorldMatrix.Translation;
+                var dir = Vector3D.Normalize(target - gravityCenter);
+                var altitude = Math.Round((target - gravityCenter).Length(), 0);
                 
-                SetCrosshairColor(CROSSHAIR_VALID);
+                target = gravityCenter + (dir * altitude);
+                
+                UpdateCursorAt(target, voxels);
+                
+                SetToolStatus("Target altitude: " + altitude + "m", MyFontEnum.Blue);
                 
                 if(trigger && !IsTargetBlocked(target))
                 {
-                    if(voxels is IMyVoxelMap)
+                    var shape = MyAPIGateway.Session.VoxelMaps.GetBoxVoxelHand();
+                    shape.Boundaries = new BoundingBoxD(-Vector3D.One, Vector3D.One); // 2m box
+                    
+                    var matrix = MatrixD.Identity;
+                    MatrixAlignToDir(ref matrix, dir);
+                    MatrixD.Rescale(ref matrix, -1);
+                    matrix.Translation = target;
+                    shape.Transform = matrix;
+                    
+                    MyAPIGateway.Session.VoxelMaps.FillInShape(voxels, shape, material.Index); // this is already synchronized
+                    return true;
+                }
+            }
+            else if(voxels is IMyVoxelMap) // asteroids
+            {
+                var target = GetTargetAt(meters) + (Vector3D.One * 0.5); // off-set to adjust for voxel position
+                var pos = AdjustTargetForAsteroid(voxels, ref target);
+                UpdateCursorAt(target, voxels);
+                var voxel = GetAsteroidVoxel(voxels, pos);
+                
+                if(voxel == 0 || voxel < VOXEL_OVERWRITE)
+                {
+                    if(meters == 4.0f)
+                    {
+                        SetToolStatus("Aim closer to the surface.", MyFontEnum.Red);
+                        UpdateCursorAt(null);
+                        return false;
+                    }
+                    
+                    SetCrosshairColor(CROSSHAIR_VALID);
+                    
+                    if(trigger && !IsTargetBlocked(target))
                     {
                         SetAsteroidVoxel(voxels, pos);
                         QueueUpdateVoxel(voxels.StorageName, pos);
                         return true;
                     }
                 }
-            }
-            else
-            {
-                if(meters <= 1.0f)
+                else
                 {
-                    if(trigger)
+                    if(meters <= 1.0f)
                     {
-                        toolStatus.Font = MyFontEnum.Red;
-                        toolStatus.Text = "You're too close.";
-                        toolStatus.AliveTime = 1500;
-                        toolStatus.Show();
+                        SetToolStatus("You're too close.", MyFontEnum.Red);
+                        UpdateCursorAt(null);
+                        return false;
                     }
                     
-                    UpdateCursorAt(null);
-                    return false;
+                    return ScanAndTrigger(voxels, trigger, meters - 1.0f, false);
                 }
-                
-                return ScanAndTrigger(voxels, trigger, meters - 1.0f, false);
             }
             
             return false;
@@ -414,8 +435,7 @@ namespace Digi.Concrete
         {
             var player = MyAPIGateway.Session.ControlledObject;
             var view = player.GetHeadMatrix(true, true);
-            return view.Translation + (view.Forward * meters) + (Vector3D.One * 0.5);
-            //return player.Entity.WorldAABB.Center + (view.Forward * meters) + (view.Up * 0.75);
+            return view.Translation + (view.Forward * meters);
         }
         
         private void UpdateCursorAt(Vector3D? target, IMyVoxelBase voxels = null)
@@ -444,6 +464,13 @@ namespace Digi.Concrete
                     
                     matrix.Translation = target.Value;
                     
+                    if(voxels is MyPlanet)
+                    {
+                        Vector3D dir = Vector3D.Normalize(target.Value - voxels.WorldMatrix.Translation);
+                        MatrixAlignToDir(ref matrix, dir);
+                        MatrixD.Rescale(ref matrix, -1);
+                    }
+                    
                     cursor.SetWorldMatrix(matrix);
                 }
             }
@@ -451,6 +478,29 @@ namespace Digi.Concrete
             {
                 Log.Error(e);
             }
+        }
+        
+        private void MatrixAlignToDir(ref MatrixD matrix, Vector3D dir)
+        {
+            Vector3D right = new Vector3D(0.0, 0.0, 1.0);
+            Vector3D up;
+            double z = dir.Z;
+            
+            if (z > -0.99999 && z < 0.99999)
+            {
+                right -= dir * z;
+                right = Vector3D.Normalize(right);
+                up = Vector3D.Cross(dir, right);
+            }
+            else
+            {
+                right = new Vector3D(dir.Z, 0.0, -dir.X);
+                up = new Vector3D(0.0, 1.0, 0.0);
+            }
+            
+            matrix.Right = right;
+            matrix.Up = up;
+            matrix.Forward = dir;
         }
         
         private IMyEntity SpawnPrefab()
@@ -501,7 +551,7 @@ namespace Digi.Concrete
                 new MyObjectBuilder_TerminalBlock()
                 {
                     EntityId = 1,
-                    SubtypeName = "ConcreteToolGhost",
+                    SubtypeName = CONCRETE_GHOST_ID,
                     Min = new SerializableVector3I(0,0,0),
                     BlockOrientation = PrefabOrientation,
                     ColorMaskHSV = PrefabVector0,
