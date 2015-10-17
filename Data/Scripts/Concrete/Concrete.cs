@@ -227,10 +227,6 @@ namespace Digi.Concrete
                             lastShotTime = tool.GunBase.LastShootTime;
                         }
                         
-                        bool trigger = (tool.GunBase.LastShootTime + DELAY_SHOOT) > DateTime.UtcNow.Ticks;
-                        HoldingTool(lastTrigger ? false : trigger);
-                        lastTrigger = trigger;
-                        
                         if(tool.GunBase.LastShootTime > lastShotTime)
                         {
                             lastShotTime = tool.GunBase.LastShootTime;
@@ -242,6 +238,10 @@ namespace Digi.Concrete
                                 inv.AddItems((MyFixedPoint)1, CONCRETE_MAG);
                             }
                         }
+                        
+                        bool trigger = (tool.GunBase.LastShootTime + DELAY_SHOOT) > DateTime.UtcNow.Ticks;
+                        HoldingTool(lastTrigger ? false : trigger);
+                        lastTrigger = trigger;
                         
                         return;
                     }
