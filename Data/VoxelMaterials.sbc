@@ -10,6 +10,9 @@
       <MinedOreRatio>1.0</MinedOreRatio>
       <CanBeHarvested>true</CanBeHarvested>
       <IsRare>false</IsRare>
+      <MaterialTypeName>Rock</MaterialTypeName>
+      <SpawnsInAsteroids>false</SpawnsInAsteroids>
+      <SpawnsFromMeteorites>false</SpawnsFromMeteorites>
       <IsIndestructible>false</IsIndestructible>
       <DamageRatio>0.2</DamageRatio>
       <DiffuseXZ>Textures\Concrete_de.dds</DiffuseXZ>

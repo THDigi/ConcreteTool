@@ -13,6 +13,7 @@ using Sandbox.Definitions;
 using Sandbox.Engine;
 using Sandbox.Engine.Physics;
 using Sandbox.Engine.Multiplayer;
+using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces;
@@ -40,6 +41,8 @@ namespace Digi.Concrete
         private IMyEntity cursor = null;
         private IMyHudNotification toolStatus = null;
         
+        public bool paint = false;
+        
         private bool lastTrigger;
         private long lastShotTime = 0;
         private Color prevCrosshairColor;
@@ -64,7 +67,7 @@ namespace Digi.Concrete
         
         private const long DELAY_SHOOT = (TimeSpan.TicksPerMillisecond * 100);
         
-        private static readonly Vector4 BOX_COLOR = new Vector4(0.0f, 0.0f, 1.0f, 0.05f);
+        //private static readonly Vector4 BOX_COLOR = new Vector4(0.0f, 0.0f, 1.0f, 0.05f);
         
         private static Color CROSSHAIR_INVALID = new Color(255, 0, 0);
         private static Color CROSSHAIR_VALID = new Color(0, 255, 0);
@@ -72,13 +75,14 @@ namespace Digi.Concrete
         
         public void Init()
         {
-            Log.Info("Initialized.");
             init = true;
+            Log.Info("Initialized.");
             isServer = MyAPIGateway.Session.OnlineMode == MyOnlineModeEnum.OFFLINE || MyAPIGateway.Multiplayer.IsServer;
             isDedicated = (MyAPIGateway.Utilities.IsDedicated && isServer);
             
             cache.Resize(Vector3I.One);
             
+            MyAPIGateway.Utilities.MessageEntered += MessageEntered;
             MyAPIGateway.Multiplayer.RegisterMessageHandler(PACKET_VOXELS, ReceivedVoxels);
             
             if(material == null && !MyDefinitionManager.Static.TryGetVoxelMaterialDefinition(CONCRETE_MATERIAL, out material))
@@ -89,7 +93,11 @@ namespace Digi.Concrete
         
         protected override void UnloadData()
         {
+            Log.Info("Mod unloaded");
+            Log.Close();
+            
             init = false;
+            MyAPIGateway.Utilities.MessageEntered -= MessageEntered;
             MyAPIGateway.Multiplayer.UnregisterMessageHandler(PACKET_VOXELS, ReceivedVoxels);
         }
         
@@ -118,7 +126,7 @@ namespace Digi.Concrete
                 }
                 
                 List<IMyVoxelBase> asteroids = new List<IMyVoxelBase>();
-                MyAPIGateway.Session.VoxelMaps.GetInstances(asteroids, a => a.StorageName.Equals(data[3]));
+                MyAPIGateway.Session.VoxelMaps.GetInstances(asteroids, a => a.StorageName != null && a.StorageName.Equals(data[3]));
                 
                 if(asteroids.Count == 0)
                 {
@@ -164,7 +172,9 @@ namespace Digi.Concrete
             Log.Info(data);
             Log.Info("");
             
-            if(MyAPIGateway.Multiplayer.SendMessageToOthers(PACKET_VOXELS, encode.GetBytes(data), true))
+            var dataBytes = encode.GetBytes(data);
+            
+            if(MyAPIGateway.Multiplayer.SendMessageToOthers(PACKET_VOXELS, dataBytes, true))
             {
                 retries = 0;
                 
@@ -234,8 +244,12 @@ namespace Digi.Concrete
                             if(!MyAPIGateway.Session.CreativeMode)
                             {
                                 // always add the shot ammo back
-                                var inv = ((IMyInventoryOwner)player).GetInventory(0) as Sandbox.ModAPI.IMyInventory;
-                                inv.AddItems((MyFixedPoint)1, CONCRETE_MAG);
+                                MyInventory inv;
+                                
+                                if((player as MyEntity).TryGetInventory(out inv))
+                                {
+                                    inv.AddItems((MyFixedPoint)1, CONCRETE_MAG);
+                                }
                             }
                         }
                         
@@ -275,24 +289,23 @@ namespace Digi.Concrete
         
         public void HoldingTool(bool trigger)
         {
-            IMyVoxelBase asteroid = GetAsteroidAt(MyAPIGateway.Session.Player.GetPosition());
+            IMyVoxelBase voxelBase = GetAsteroidAt(MyAPIGateway.Session.Player.GetPosition());
             bool placed = false;
             
             SetCrosshairColor(CROSSHAIR_INVALID);
             
-            if(asteroid == null)
+            if(voxelBase == null)
             {
                 UpdateCursorAt(null);
                 
                 if(trigger)
                 {
-                    // TODO add word 'planets' when those are relevant
-                    SetToolStatus("Concrete can only be placed on asteroids!", MyFontEnum.Red, 1500);
+                    SetToolStatus("Concrete can only be placed on planets or asteroids!", MyFontEnum.Red, 1500);
                 }
             }
             else
             {
-                placed = ScanAndTrigger(asteroid, trigger, 4.0f);
+                placed = ScanAndTrigger(voxelBase, trigger, 4.0f);
             }
             
             if(trigger && placed)
@@ -302,9 +315,12 @@ namespace Digi.Concrete
                 if(!MyAPIGateway.Session.CreativeMode)
                 {
                     // expend the ammo manually
-                    var player = MyAPIGateway.Session.Player.Controller.ControlledEntity.Entity;
-                    var inv = ((IMyInventoryOwner)player).GetInventory(0) as Sandbox.ModAPI.IMyInventory;
-                    inv.RemoveItemsOfType((MyFixedPoint)1, CONCRETE_MAG, false);
+                    MyInventory inv;
+                    
+                    if((MyAPIGateway.Session.Player.Controller.ControlledEntity.Entity as MyEntity).TryGetInventory(out inv))
+                    {
+                        inv.RemoveItemsOfType((MyFixedPoint)1, CONCRETE_MAG, false);
+                    }
                 }
             }
         }
@@ -347,12 +363,13 @@ namespace Digi.Concrete
                 var gravityCenter = planet.WorldMatrix.Translation;
                 var dir = Vector3D.Normalize(target - gravityCenter);
                 var altitude = Math.Round((target - gravityCenter).Length(), 0);
-                
                 target = gravityCenter + (dir * altitude);
+                
+                // TODO voxel range finding
                 
                 UpdateCursorAt(target, voxels);
                 
-                SetToolStatus("Target altitude: " + altitude + "m", MyFontEnum.Blue);
+                //SetToolStatus("Target altitude: " + altitude + "m", MyFontEnum.Blue);
                 
                 if(trigger && !IsTargetBlocked(target))
                 {
@@ -365,7 +382,11 @@ namespace Digi.Concrete
                     matrix.Translation = target;
                     shape.Transform = matrix;
                     
-                    MyAPIGateway.Session.VoxelMaps.FillInShape(voxels, shape, material.Index); // this is already synchronized
+                    if(paint)
+                        MyAPIGateway.Session.VoxelMaps.PaintInShape(voxels, shape, material.Index); // this is already synchronized
+                    else
+                        MyAPIGateway.Session.VoxelMaps.FillInShape(voxels, shape, material.Index); // this is already synchronized
+                    
                     return true;
                 }
             }
@@ -389,8 +410,8 @@ namespace Digi.Concrete
                     
                     if(trigger && !IsTargetBlocked(target))
                     {
-                        SetAsteroidVoxel(voxels, pos);
-                        QueueUpdateVoxel(voxels.StorageName, pos);
+                        //SetAsteroidVoxel(voxels, pos); // not needed because SendMessageToOthers() now sends to yourself as well... for some reason
+                        QueueUpdateVoxel(voxels.StorageName, pos); // send updates over the network
                         return true;
                     }
                 }
@@ -419,6 +440,9 @@ namespace Digi.Concrete
             
             foreach(IMyVoxelBase asteroid in asteroids)
             {
+                if(asteroid.StorageName == null)
+                    continue;
+                
                 min = asteroid.PositionLeftBottomCorner;
                 max = min + asteroid.Storage.Size;
                 
@@ -588,6 +612,9 @@ namespace Digi.Concrete
         
         private bool IsTargetBlocked(Vector3D target)
         {
+            if(paint)
+                return false; // if we're painting ignore nearby entities
+            
             CleanHitBoxes(true);
             BoundingBoxD box = new BoundingBoxD(target - 0.5, target + 0.5);
             MyAPIGateway.Entities.GetEntities(ents, (ent => ent.Physics != null && !ent.Physics.IsStatic && (ent is IMyCubeGrid || ent is IMyFloatingObject || ent is IMyCharacter) && ent.WorldAABB.Intersects(ref box)));
@@ -601,7 +628,7 @@ namespace Digi.Concrete
                     if(!you && ent == MyAPIGateway.Session.Player.Controller.ControlledEntity.Entity)
                         you = true;
                     
-                    MyAPIGateway.Entities.EnableEntityBoundingBoxDraw(ent, true, BOX_COLOR, 0.5f, null);
+                    MyAPIGateway.Entities.EnableEntityBoundingBoxDraw(ent, true, null, 0.5f, null);
                 }
                 
                 SetCrosshairColor(CROSSHAIR_BLOCKED);
@@ -628,6 +655,25 @@ namespace Digi.Concrete
             cache.Content(ref Vector3I.Zero, MyVoxelConstants.VOXEL_CONTENT_FULL);
             cache.Material(ref Vector3I.Zero, material.Index);
             asteroid.Storage.WriteRange(cache, MyStorageDataTypeFlags.ContentAndMaterial, pos, pos);
+        }
+        
+        public void MessageEntered(string msg, ref bool send)
+        {
+            if(msg.StartsWith("/concrete", StringComparison.InvariantCultureIgnoreCase))
+            {
+                send = false;
+                msg = msg.Substring("/concrete".Length).Trim().ToLower();
+                
+                if(msg.StartsWith("paint"))
+                {
+                    paint = !paint;
+                    MyAPIGateway.Utilities.ShowMessage(Log.MOD_NAME, "Paint mode " + (paint ? "enabled" : "disabled") + ".");
+                    return;
+                }
+                
+                MyAPIGateway.Utilities.ShowMessage(Log.MOD_NAME, "Commands:");
+                MyAPIGateway.Utilities.ShowMessage("/concrete paint", " toggle paint mode");
+            }
         }
     }
 }
