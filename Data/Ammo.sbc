@@ -1,42 +1,42 @@
 <?xml version="1.0"?>
 <Definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <AmmoMagazines>
-    <AmmoMagazine>
-      <Id>
-        <TypeId>AmmoMagazine</TypeId>
-        <SubtypeId>ConcreteMix</SubtypeId>
-      </Id>
-      <DisplayName>Concrete Mix</DisplayName>
-      <Icon>Textures\GUI\Icons\ingot\gravel_ingot.dds</Icon>
-      <Size>
-        <X>0.001</X>
-        <Y>0.001</Y>
-        <Z>0.001</Z>
-      </Size>
-      <Mass>2</Mass>
-      <Volume>2</Volume>
-      <Model>Models\Ingots\stone_ingot.mwm</Model>
-      <Capacity>1</Capacity>
-      <AmmoDefinitionId Subtype="ConcreteDull" />
-    </AmmoMagazine>
-  </AmmoMagazines>
-  <Ammos>
-    <Ammo xsi:type="MyObjectBuilder_ProjectileAmmoDefinition">
-      <Id>
-        <TypeId>AmmoDefinition</TypeId>
-        <SubtypeId>ConcreteDull</SubtypeId>
-      </Id>
-      <BasicProperties>
-        <DesiredSpeed>0</DesiredSpeed>
-        <SpeedVariance>0</SpeedVariance>
-        <MaxTrajectory>0</MaxTrajectory>
-        <BackkickForce>0.0</BackkickForce>
-      </BasicProperties>
-      <ProjectileProperties>
-        <ProjectileHitImpulse>0.0</ProjectileHitImpulse>
-        <ProjectileMassDamage>0</ProjectileMassDamage>
-        <ProjectileHealthDamage>0</ProjectileHealthDamage>
-      </ProjectileProperties>
-    </Ammo>
-  </Ammos>
+	<AmmoMagazines>
+		<AmmoMagazine>
+			<Id>
+				<TypeId>AmmoMagazine</TypeId>
+				<SubtypeId>ConcreteMix</SubtypeId>
+			</Id>
+			<DisplayName>Concrete Mix</DisplayName>
+			<Icon>Textures\GUI\Icons\ingot\gravel_ingot.dds</Icon>
+			<Size>
+				<X>0.001</X>
+				<Y>0.001</Y>
+				<Z>0.001</Z>
+			</Size>
+			<Mass>2</Mass>
+			<Volume>2</Volume>
+			<Model>Models\Ingots\stone_ingot.mwm</Model>
+			<Capacity>1</Capacity>
+			<AmmoDefinitionId Subtype="ConcreteDull" />
+		</AmmoMagazine>
+	</AmmoMagazines>
+	<Ammos>
+		<Ammo xsi:type="MyObjectBuilder_ProjectileAmmoDefinition">
+			<Id>
+				<TypeId>AmmoDefinition</TypeId>
+				<SubtypeId>ConcreteDull</SubtypeId>
+			</Id>
+			<BasicProperties>
+				<DesiredSpeed>0</DesiredSpeed>
+				<SpeedVariance>0</SpeedVariance>
+				<MaxTrajectory>0</MaxTrajectory>
+				<BackkickForce>0.0</BackkickForce>
+			</BasicProperties>
+			<ProjectileProperties>
+				<ProjectileHitImpulse>0.0</ProjectileHitImpulse>
+				<ProjectileMassDamage>0</ProjectileMassDamage>
+				<ProjectileHealthDamage>0</ProjectileHealthDamage>
+			</ProjectileProperties>
+		</Ammo>
+	</Ammos>
 </Definitions>

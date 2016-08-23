@@ -1,0 +1,143 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    /*
+                    if(planet != null)
+                    {
+                        var planetCenter = planet.WorldMatrix.Translation;
+                        var dir = (target - planetCenter);
+                        var altitude = dir.Normalize();
+
+                        if(input.IsAnyShiftKeyPressed()) // TODO use shift to lock on an axis ?
+                            target = planetCenter + (dir * altitude);
+
+                        placeMatrix = MatrixD.CreateFromDir(dir, view.Forward);
+
+                        SetToolStatus("Aligned to gravity.", MyFontEnum.Green, 1500);
+                    }
+                    else
+                    {
+                        var grid = MyAPIGateway.CubeBuilder.FindClosestGrid();
+
+                        if(grid == null)
+                        {
+                            SetToolStatus("First aim at a grid to align to.", MyFontEnum.Red, 3000);
+                        }
+                        else
+                        {
+                            placeMatrix = grid.WorldMatrix;
+
+                            SetToolStatus("Aligned to grid.", MyFontEnum.Green, 1500);
+                        }
+                    }
+                    */
+
+
+            /*
+            if(voxels is MyPlanet) // planets
+            {
+                var target = GetTargetAt(3);
+                var planet = voxels as MyPlanet;
+                var gravityCenter = planet.WorldMatrix.Translation;
+                var dir = Vector3D.Normalize(target - gravityCenter);
+                var altitude = Math.Round((target - gravityCenter).Length(), 0);
+                target = gravityCenter + (dir * altitude);
+
+                // TODO voxel range finding
+
+                UpdateCursorAt(target, voxels);
+
+                //SetToolStatus("Target altitude: " + altitude + "m", MyFontEnum.Blue);
+
+                if(trigger && !IsTargetBlocked(target))
+                {
+                    var shape = MyAPIGateway.Session.VoxelMaps.GetBoxVoxelHand();
+                    shape.Boundaries = new BoundingBoxD(-Vector3D.One, Vector3D.One); // 2m box
+
+                    var matrix = MatrixD.Identity;
+                    MatrixAlignToDir(ref matrix, dir);
+                    MatrixD.Rescale(ref matrix, -1);
+                    matrix.Translation = target;
+                    shape.Transform = matrix;
+
+                    if(paint)
+                        MyAPIGateway.Session.VoxelMaps.PaintInShape(voxels, shape, material.Index); // this is already synchronized
+                    else
+                        MyAPIGateway.Session.VoxelMaps.FillInShape(voxels, shape, material.Index); // this is already synchronized
+
+                    return true;
+                }
+            }
+            else if(voxels is IMyVoxelMap) // asteroids
+            {
+                var target = GetTargetAt(meters) + (Vector3D.One * 0.5); // off-set to adjust for voxel position
+                var pos = AdjustTargetForAsteroid(voxels, ref target);
+                UpdateCursorAt(target, voxels);
+                var voxel = GetAsteroidVoxel(voxels, pos);
+
+                if(voxel == 0 || voxel < VOXEL_OVERWRITE)
+                {
+                    if(meters == 4.0f)
+                    {
+                        SetToolStatus("Aim closer to the surface.", MyFontEnum.Red);
+                        UpdateCursorAt(null);
+                        return false;
+                    }
+
+                    SetCrosshairColor(CROSSHAIR_VALID);
+
+                    if(trigger && !IsTargetBlocked(target))
+                    {
+                        SetAsteroidVoxel(voxels, pos);
+                        QueueUpdateVoxel(voxels.StorageName, pos); // send updates over the network
+                        return true;
+                    }
+                }
+                else
+                {
+                    if(meters <= 1.0f)
+                    {
+                        SetToolStatus("You're too close.", MyFontEnum.Red);
+                        UpdateCursorAt(null);
+                        return false;
+                    }
+
+                    return ScanAndTrigger(voxels, trigger, meters - 1.0f, false);
+                }
+            }
+
+            return false;
+            */
