@@ -10,12 +10,11 @@ using VRage.Game.Components;
 using VRage.Game.Entity;
 using VRageMath;
 using VRage;
-using VRage.ObjectBuilders;
-using VRage.Voxels;
 using VRage.ModAPI;
 using VRage.Input;
 using VRage.Game;
 using VRage.Game.ModAPI;
+using VRage.Voxels;
 
 using Digi.Utils;
 
@@ -24,6 +23,11 @@ namespace Digi.Concrete
     [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
     public class Concrete : MySessionComponentBase
     {
+        public override void LoadData()
+        {
+            Log.SetUp("Concrete Tool", 396679430, "ConcreteTool");
+        }
+        
         public enum PlaceShape
         {
             BOX,
@@ -293,7 +297,7 @@ namespace Digi.Concrete
 
         public void HoldingTool(bool trigger)
         {
-            IMyVoxelBase voxelBase = GetAsteroidAt(MyAPIGateway.Session.Player.GetPosition());
+            IMyVoxelBase voxelBase = GetVoxelMapAt(MyAPIGateway.Session.Player.GetPosition());
             bool placed = false;
 
             SetCrosshairColor(CROSSHAIR_INVALID);
@@ -743,35 +747,28 @@ namespace Digi.Concrete
             }
         }
 
-        private IMyVoxelBase GetAsteroidAt(Vector3D pos)
+        private IMyVoxelBase GetVoxelMapAt(Vector3D pos)
         {
-            var asteroids = new List<IMyVoxelBase>();
-            MyAPIGateway.Session.VoxelMaps.GetInstances(asteroids);
+            var maps = new List<IMyVoxelBase>();
+            MyAPIGateway.Session.VoxelMaps.GetInstances(maps);
             Vector3D min;
             Vector3D max;
 
-            foreach(IMyVoxelBase asteroid in asteroids)
+            // TODO get the smallest of the matches?
+
+            foreach(IMyVoxelBase voxel in maps)
             {
-                if(asteroid.StorageName == null)
+                if(voxel.StorageName == null)
                     continue;
 
-                min = asteroid.PositionLeftBottomCorner;
-                max = min + asteroid.Storage.Size;
+                min = voxel.PositionLeftBottomCorner;
+                max = min + voxel.Storage.Size;
 
                 if(min.X <= pos.X && pos.X <= max.X && min.Y <= pos.Y && pos.Y <= max.Y && min.Z <= pos.Z && pos.Z <= max.Z)
-                {
-                    return asteroid;
-                }
+                    return voxel;
             }
 
             return null;
-        }
-
-        private Vector3I AdjustTargetForAsteroid(IMyVoxelBase asteroid, ref Vector3D target)
-        {
-            var pos = new Vector3I(target - asteroid.PositionLeftBottomCorner);
-            target = asteroid.PositionLeftBottomCorner + new Vector3D(pos);
-            return pos;
         }
 
         public void MessageEntered(string msg, ref bool send)
@@ -788,7 +785,7 @@ namespace Digi.Concrete
                     var inputAlign = InputHandler.GetFriendlyStringForControl(MyAPIGateway.Input.GetGameControl(MyControlsSpace.CUBE_BUILDER_CUBESIZE_MODE));
                     var inputGrid = InputHandler.GetFriendlyStringForControl(MyAPIGateway.Input.GetGameControl(MyControlsSpace.FREE_ROTATION));
                     var str = new StringBuilder();
-                    
+
                     str.AppendLine("The concrete tool is a hand-held tool that allows\n  placement of concrete on to asteroids or planets.");
                     str.AppendLine();
                     str.AppendLine("The tool and ammo for it can be made in an assembler.");
@@ -818,7 +815,7 @@ namespace Digi.Concrete
                     return;
                 }
 
-                MyAPIGateway.Utilities.ShowMessage(Log.MOD_NAME, "Commands:");
+                MyAPIGateway.Utilities.ShowMessage(Log.modName, "Commands:");
                 MyAPIGateway.Utilities.ShowMessage("/concrete help ", "key combination information");
             }
         }

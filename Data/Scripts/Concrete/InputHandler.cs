@@ -9,6 +9,7 @@ using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
 using Digi.Utils;
+using VRage.Game.ModAPI;
 
 namespace Digi.Utils
 {
@@ -117,8 +118,10 @@ namespace Digi.Utils
         public const string MOUSE_PREFIX = "m.";
         public const string GAMEPAD_PREFIX = "g.";
         public const string CONTROL_PREFIX = "c.";
-
+        
+#if STABLE // TODO STABLE CONDITION
         private static byte menuInChat = 0;
+#endif
 
         private static readonly StringBuilder tmp = new StringBuilder();
 
@@ -586,16 +589,21 @@ namespace Digi.Utils
 
         public static void Init() // NOTE: this must be called in the session component.
         {
+#if STABLE // TODO STABLE CONDITION
             MyAPIGateway.GuiControlCreated += GUICreated;
+#endif
         }
 
         public static void Close() // NOTE: this must be called in the session component.
         {
+#if STABLE // TODO STABLE CONDITION
             MyAPIGateway.GuiControlCreated -= GUICreated;
+#endif
         }
 
         public static void Update() // NOTE: this must be called in the session component.
         {
+#if STABLE // TODO STABLE CONDITION
             if(menuInChat > 0)
             {
                 if(menuInChat > 1)
@@ -603,8 +611,10 @@ namespace Digi.Utils
                 else if(MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.CHAT_SCREEN) || MyAPIGateway.Input.IsNewKeyPressed(MyKeys.Escape))
                     menuInChat = 0;
             }
+#endif
         }
 
+#if STABLE // TODO STABLE CONDITION
         public static void GUICreated(object obj)
         {
             var ui = obj.ToString();
@@ -612,14 +622,20 @@ namespace Digi.Utils
             if(ui == "Sandbox.Game.Gui.MyGuiScreenChat")
                 menuInChat = 2; // need to skip one tick because enter is still being registered as new-pressed this tick
         }
+#endif
 
         public static bool IsInputReadable()
         {
             // this needs to detect properly: escape menu, F10 and F11 menus, mission screens, yes/no notifications.
-            // I can detect all of the above with the GUICreated event except for the F11 menu, but I can't reliably know when they're closed, so not going to use them.
 
-            // FIXME whitelist broke this
+#if STABLE // TODO STABLE CONDITION
             return menuInChat == 0; // && MyGuiScreenGamePlay.ActiveGameplayScreen == null && MyGuiScreenTerminal.GetCurrentScreen() == MyTerminalPageEnum.None;
+#else
+            var GUI = MyAPIGateway.Gui;
+
+            // TODO add when fixed: GUI.ActiveGamePlayScreen == null && 
+            return !GUI.ChatEntryVisible && GUI.GetCurrentScreen == MyTerminalPageEnum.None;
+#endif
         }
 
         public static void AppendNiceNamePrefix(string key, object obj, StringBuilder str)
@@ -819,7 +835,7 @@ namespace Digi.Utils
             {
                 if(tmp.Length > 0)
                     tmp.Append(" or ");
-                
+
                 var def = control.GetKeyboardControl().ToString();
                 tmp.Append(inputNiceNames.GetValueOrDefault(inputNames.GetValueOrDefault(control.GetKeyboardControl(), def), def));
             }
