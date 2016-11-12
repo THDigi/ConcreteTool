@@ -16,8 +16,6 @@ using VRage.Game;
 using VRage.Game.ModAPI;
 using VRage.Voxels;
 
-using Digi.Utils;
-
 namespace Digi.Concrete
 {
     [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
@@ -77,9 +75,7 @@ namespace Digi.Concrete
 
             init = true;
             isThisDedicated = (MyAPIGateway.Utilities.IsDedicated && MyAPIGateway.Multiplayer.IsServer);
-
-            InputHandler.Init();
-
+            
             MyAPIGateway.Utilities.MessageEntered += MessageEntered;
 
             if(MyAPIGateway.Multiplayer.IsServer)
@@ -98,9 +94,7 @@ namespace Digi.Concrete
                 if(init)
                 {
                     init = false;
-
-                    InputHandler.Close();
-
+                    
                     MyAPIGateway.Utilities.MessageEntered -= MessageEntered;
 
                     if(MyAPIGateway.Multiplayer.IsServer)
@@ -224,9 +218,7 @@ namespace Digi.Concrete
                         }
                     }
                 }
-
-                InputHandler.Update();
-
+                
                 var character = MyAPIGateway.Session.ControlledObject as IMyCharacter;
 
                 if(character != null)
@@ -333,7 +325,11 @@ namespace Digi.Concrete
             }
         }
 
+#if STABLE // HACK >>> STABLE condition
         private void SetToolStatus(string text, MyFontEnum font, int aliveTime = 300)
+#else
+        private void SetToolStatus(string text, string font, int aliveTime = 300)
+#endif
         {
             toolStatus.Font = font;
             toolStatus.Text = text;
@@ -362,7 +358,8 @@ namespace Digi.Concrete
             IMyVoxelShape placeShape = null;
 
             var input = MyAPIGateway.Input;
-            bool inputReadable = InputHandler.IsInputReadable();
+            bool inputReadable = true; // InputHandler.IsInputReadable();
+            // HACK undo this comment ^ once InputHandler.IsInputReadable() no longer throws exceptions when not in a menu; also remove all other InputHandler.IsInputReadable() instances from the code
             bool removeMode = false;
 
             if(inputReadable)
@@ -370,7 +367,7 @@ namespace Digi.Concrete
                 var scroll = input.DeltaMouseScrollWheelValue();
                 removeMode = input.IsAnyCtrlKeyPressed();
 
-                if(scroll != 0)
+                if(scroll != 0 && InputHandler.IsInputReadable())
                 {
                     if(input.IsAnyCtrlKeyPressed())
                     {
@@ -422,7 +419,7 @@ namespace Digi.Concrete
                     */
                 }
 
-                if(input.IsNewGameControlPressed(MyControlsSpace.FREE_ROTATION))
+                if(input.IsNewGameControlPressed(MyControlsSpace.FREE_ROTATION) && InputHandler.IsInputReadable())
                 {
                     if(++snap > 2)
                         snap = 0;
@@ -446,7 +443,7 @@ namespace Digi.Concrete
                 bool shift = input.IsAnyShiftKeyPressed();
                 var rotateInput = RotateInput(shift);
 
-                if(rotateInput.X != 0 || rotateInput.Y != 0 || rotateInput.Z != 0)
+                if((rotateInput.X != 0 || rotateInput.Y != 0 || rotateInput.Z != 0) && InputHandler.IsInputReadable())
                 {
                     if(shift || ++skipSoundTicks > 15)
                     {
@@ -468,7 +465,7 @@ namespace Digi.Concrete
                         placeMatrix *= MatrixD.CreateFromAxisAngle(placeMatrix.Forward, MathHelper.ToRadians(rotateInput.Z * angle));
                 }
 
-                if(input.IsNewGameControlPressed(MyControlsSpace.CUBE_BUILDER_CUBESIZE_MODE))
+                if(input.IsNewGameControlPressed(MyControlsSpace.CUBE_BUILDER_CUBESIZE_MODE) && InputHandler.IsInputReadable())
                 {
                     PlaySound("HudItem", 0.1f);
 
@@ -548,7 +545,7 @@ namespace Digi.Concrete
                 int altitude = (int)Math.Round(dir.Normalize(), 0);
                 target = center + (dir * altitude);
 
-                if(inputReadable && input.IsAnyShiftKeyPressed())
+                if(inputReadable && input.IsAnyShiftKeyPressed() && InputHandler.IsInputReadable())
                 {
                     if(input.IsNewKeyPressed(MyKeys.Shift))
                         altitudeLock = altitude;
@@ -754,9 +751,9 @@ namespace Digi.Concrete
             Vector3D min;
             Vector3D max;
 
-            // TODO get the smallest of the matches?
+            // TODO get the smallest of the matches? or better yet just get all of them and give the player a choice
 
-            foreach(IMyVoxelBase voxel in maps)
+            foreach(var voxel in maps)
             {
                 if(voxel.StorageName == null)
                     continue;
