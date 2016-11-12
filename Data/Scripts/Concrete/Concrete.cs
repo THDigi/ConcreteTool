@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
+using Sandbox.ModAPI.Interfaces;
+using Sandbox.ModAPI.Weapons;
 using VRage.Game.Components;
 using VRage.Game.Entity;
 using VRageMath;
@@ -14,7 +17,8 @@ using VRage.ModAPI;
 using VRage.Input;
 using VRage.Game;
 using VRage.Game.ModAPI;
-using VRage.Voxels;
+using VRage.Library.Collections;
+using static Sandbox.ModAPI.MyAPIGateway;
 
 namespace Digi.Concrete
 {
@@ -25,7 +29,7 @@ namespace Digi.Concrete
         {
             Log.SetUp("Concrete Tool", 396679430, "ConcreteTool");
         }
-        
+
         public enum PlaceShape
         {
             BOX,
@@ -36,19 +40,38 @@ namespace Digi.Concrete
 
         public static bool init { get; private set; }
         public static bool isThisDedicated { get; private set; }
+        public static Concrete instance = null;
+
+        public IMyAutomaticRifleGun holdingTool = null;
+        public long lastShotTick = 0;
 
         private int skipClean = 0;
-        private bool holdingTool = false;
         private IMyHudNotification toolStatus = null;
-        private long lastShotTime = 0;
+        private IMyVoxelBase selectedVoxelMap = null;
+        private int selectedVoxelMapIndex = 0;
+        private long previousSelectedVoxelMapId = 0;
+        private int selectedVoxelMapTicks = 0;
         //private Color prevCrosshairColor;
 
-        private MyVoxelMaterialDefinition material = null;
-        private MyStorageData cache = new MyStorageData();
-        private HashSet<IMyEntity> ents = new HashSet<IMyEntity>();
-        private Queue<string> voxelPackets = new Queue<string>();
+        //private PlaceShape selectedShape = PlaceShape.BOX;
+        private byte snap = 1;
+        private float placeDistance = 4f;
+        private float placeScale = 1f;
+        private MatrixD placeMatrix = MatrixD.Identity;
+        private bool rotated = false;
+        private int holdPressRemove = 0;
+        private byte cooldown = 0;
+        private int altitudeLock = 0;
+        private bool hudUnablePlayed = false;
+        private byte skipSoundTicks = 0;
+
+        private static MyVoxelMaterialDefinition material = null;
+        private static readonly HashSet<IMyEntity> ents = new HashSet<IMyEntity>();
+        private static readonly List<IMyVoxelBase> maps = new List<IMyVoxelBase>();
 
         public const ushort PACKET = 63311;
+
+        public const int VOXEL_MAP_SELECTED_TICKS = 120;
 
         public const string CONCRETE_MATERIAL = "Concrete";
         public const string CONCRETE_TOOL = "ConcreteTool";
@@ -71,12 +94,13 @@ namespace Digi.Concrete
 
         public void Init()
         {
+            instance = this;
             Log.Init();
 
             init = true;
-            isThisDedicated = (MyAPIGateway.Utilities.IsDedicated && MyAPIGateway.Multiplayer.IsServer);
-            
-            MyAPIGateway.Utilities.MessageEntered += MessageEntered;
+            isThisDedicated = (Utilities.IsDedicated && MyAPIGateway.Multiplayer.IsServer);
+
+            Utilities.MessageEntered += MessageEntered;
 
             if(MyAPIGateway.Multiplayer.IsServer)
                 MyAPIGateway.Multiplayer.RegisterMessageHandler(PACKET, ReceivedPacket);
@@ -89,13 +113,16 @@ namespace Digi.Concrete
 
         protected override void UnloadData()
         {
+            instance = null;
+            material = null;
+
             try
             {
                 if(init)
                 {
                     init = false;
-                    
-                    MyAPIGateway.Utilities.MessageEntered -= MessageEntered;
+
+                    Utilities.MessageEntered -= MessageEntered;
 
                     if(MyAPIGateway.Multiplayer.IsServer)
                         MyAPIGateway.Multiplayer.UnregisterMessageHandler(PACKET, ReceivedPacket);
@@ -218,42 +245,48 @@ namespace Digi.Concrete
                         }
                     }
                 }
-                
-                var character = MyAPIGateway.Session.ControlledObject as IMyCharacter;
 
-                if(character != null)
+                if(selectedVoxelMapTicks > 0)
                 {
-                    var charObj = character.GetObjectBuilder(false) as MyObjectBuilder_Character;
-                    var tool = charObj.HandWeapon as MyObjectBuilder_AutomaticRifle;
-
-                    if(tool != null && tool.SubtypeName == CONCRETE_TOOL)
+                    if(selectedVoxelMap == null)
                     {
-                        if(!holdingTool)
-                        {
-                            DrawTool();
-                            lastShotTime = tool.GunBase.LastShootTime;
-                        }
-
-                        if(tool.GunBase.LastShootTime > lastShotTime)
-                        {
-                            lastShotTime = tool.GunBase.LastShootTime;
-
-                            if(!MyAPIGateway.Session.CreativeMode)
-                            {
-                                SendToServer_Ammo(character.EntityId, true); // always add the shot ammo back
-                            }
-                        }
-
-                        bool trigger = (tool.GunBase.LastShootTime + DELAY_SHOOT) > DateTime.UtcNow.Ticks;
-                        HoldingTool(trigger);
-                        return;
+                        selectedVoxelMapTicks = 0;
+                    }
+                    else
+                    {
+                        selectedVoxelMapTicks--;
+                        var matrix = selectedVoxelMap.WorldMatrix;
+                        var box = (BoundingBoxD)selectedVoxelMap.LocalAABB;
+                        var color = Color.Green * MathHelper.Lerp(0.5f, 0f, 1f - ((float)selectedVoxelMapTicks / (float)VOXEL_MAP_SELECTED_TICKS));
+                        MySimpleObjectDraw.DrawTransparentBox(ref matrix, ref box, ref color, MySimpleObjectRasterizer.Wireframe, 1, 0.01f, "Square", "Square", false);
                     }
                 }
 
-                if(holdingTool)
+                if(holdingTool == null || holdingTool.Closed || holdingTool.MarkedForClose)
                 {
                     HolsterTool();
+                    return;
                 }
+
+                var character = MyAPIGateway.Session.ControlledObject as IMyCharacter;
+
+                if(character == null)
+                    return;
+
+                var toolShotTick = holdingTool.GunBase.LastShootTime.Ticks;
+
+                if(toolShotTick > lastShotTick)
+                {
+                    lastShotTick = toolShotTick;
+
+                    if(!MyAPIGateway.Session.CreativeMode)
+                    {
+                        SendToServer_Ammo(character.EntityId, true); // always add the shot ammo back
+                    }
+                }
+
+                var trigger = (toolShotTick + DELAY_SHOOT) > DateTime.UtcNow.Ticks;
+                HoldingTool(trigger);
             }
             catch(Exception e)
             {
@@ -274,27 +307,73 @@ namespace Digi.Concrete
             emitter.PlaySingleSound(new MySoundPair(name));
         }
 
-        public void DrawTool()
+        public void DrawTool(IMyAutomaticRifleGun gun)
         {
-            holdingTool = true;
+            holdingTool = gun;
+            lastShotTick = gun.GunBase.LastShootTime.Ticks;
 
             if(toolStatus == null)
-            {
-                toolStatus = MyAPIGateway.Utilities.CreateNotification("", 500, MyFontEnum.White);
-                toolStatus.Hide();
-            }
+                toolStatus = Utilities.CreateNotification("", 500, MyFontEnum.White);
 
             SetToolStatus("For key combination help, type in chat: /concrete help", MyFontEnum.Blue, 1000);
         }
 
         public void HoldingTool(bool trigger)
         {
-            IMyVoxelBase voxelBase = GetVoxelMapAt(MyAPIGateway.Session.Player.GetPosition());
-            bool placed = false;
+            var character = MyAPIGateway.Session.ControlledObject as IMyCharacter;
+
+            if(character == null)
+                return;
+
+            var view = character.GetHeadMatrix(true, true);
+            var target = view.Translation + (view.Forward * placeDistance);
+            selectedVoxelMap = null;
+            maps.Clear();
+
+            MyAPIGateway.Session.VoxelMaps.GetInstances(maps, delegate (IMyVoxelBase map)
+            {
+                if(map.StorageName == null)
+                    return false;
+
+                var min = map.PositionLeftBottomCorner;
+                var max = min + map.Storage.Size;
+
+                return (min.X <= target.X && target.X <= max.X && min.Y <= target.Y && target.Y <= max.Y && min.Z <= target.Z &&
+                        target.Z <= max.Z);
+            });
+
+            // DEBUG testing
+            //var sphere = new BoundingSphereD(pos, 1);
+            //var entities = new List<MyEntity>(); // TODO global
+            //MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref sphere, entities, MyEntityQueryType.Static);
+
+            //foreach(var ent in entities)
+            //{
+            //    var map = ent as IMyVoxelBase;
+
+            //    if(map != null)
+            //        maps.Add(map);
+            //}
+
+            if(maps.Count == 1)
+            {
+                selectedVoxelMap = maps[0];
+            }
+            else
+            {
+                if(Input.IsNewGameControlPressed(MyControlsSpace.USE) && InputHandler.IsInputReadable())
+                    selectedVoxelMapIndex++;
+
+                if(selectedVoxelMapIndex >= maps.Count)
+                    selectedVoxelMapIndex = 0;
+
+                selectedVoxelMap = maps[selectedVoxelMapIndex];
+                SetToolStatus("Selected Voxel Map: " + selectedVoxelMap.StorageName + " (" + (selectedVoxelMapIndex + 1) + " of " + maps.Count + ")", MyFontEnum.White, 100);
+            }
 
             SetCrosshairColor(CROSSHAIR_INVALID);
 
-            if(voxelBase == null)
+            if(selectedVoxelMap == null)
             {
                 if(trigger)
                 {
@@ -303,26 +382,27 @@ namespace Digi.Concrete
             }
             else
             {
-                placed = ToolProcess(voxelBase, trigger);
-            }
+                if(selectedVoxelMap.EntityId != previousSelectedVoxelMapId)
+                {
+                    previousSelectedVoxelMapId = selectedVoxelMap.EntityId;
+                    selectedVoxelMapTicks = VOXEL_MAP_SELECTED_TICKS;
+                }
 
-            if(trigger && placed && !MyAPIGateway.Session.CreativeMode)
-            {
-                var character = MyAPIGateway.Session.ControlledObject as IMyCharacter;
-                SendToServer_Ammo(character.EntityId, false); // expend the ammo manually
+                var placed = ToolProcess(selectedVoxelMap, target, view, trigger);
+
+                if(trigger && placed && !MyAPIGateway.Session.CreativeMode)
+                {
+                    SendToServer_Ammo(character.EntityId, false); // expend the ammo manually
+                }
             }
         }
 
         public void HolsterTool()
         {
-            holdingTool = false;
-
+            holdingTool = null;
+            selectedVoxelMap = null;
             SetCrosshairColor(null);
-
-            if(toolStatus != null)
-            {
-                toolStatus.Hide();
-            }
+            toolStatus?.Hide();
         }
 
 #if STABLE // HACK >>> STABLE condition
@@ -337,29 +417,14 @@ namespace Digi.Concrete
             toolStatus.Show();
         }
 
-        //private PlaceShape selectedShape = PlaceShape.BOX;
-        private byte snap = 1;
-        private float placeDistance = 4f;
-        private float placeScale = 1f;
-        private MatrixD placeMatrix = MatrixD.Identity;
-        private bool rotated = false;
-        private int holdPressRemove = 0;
-        private byte cooldown = 0;
-        private int altitudeLock = 0;
-        private bool hudUnablePlayed = false;
-        private byte skipSoundTicks = 0;
-
-        private bool ToolProcess(IMyVoxelBase voxels, bool trigger)
+        private bool ToolProcess(IMyVoxelBase voxels, Vector3D target, MatrixD view, bool trigger)
         {
-            var controlled = MyAPIGateway.Session.ControlledObject;
-            var view = controlled.GetHeadMatrix(true, true);
-            var target = view.Translation + (view.Forward * placeDistance);
             var planet = voxels as MyPlanet;
             IMyVoxelShape placeShape = null;
 
-            var input = MyAPIGateway.Input;
+            var input = Input;
             bool inputReadable = true; // InputHandler.IsInputReadable();
-            // HACK undo this comment ^ once InputHandler.IsInputReadable() no longer throws exceptions when not in a menu; also remove all other InputHandler.IsInputReadable() instances from the code
+                                       // HACK undo this comment ^ once InputHandler.IsInputReadable() no longer throws exceptions when not in a menu; also remove all other InputHandler.IsInputReadable() instances from the code
             bool removeMode = false;
 
             if(inputReadable)
@@ -469,7 +534,7 @@ namespace Digi.Concrete
                 {
                     PlaySound("HudItem", 0.1f);
 
-                    var grid = MyAPIGateway.CubeBuilder.FindClosestGrid();
+                    var grid = CubeBuilder.FindClosestGrid();
 
                     if(grid != null)
                     {
@@ -558,13 +623,13 @@ namespace Digi.Concrete
                             hudUnablePlayed = true;
                         }
 
-                        MyAPIGateway.Utilities.ShowNotification("Too far away from locked altitude!", 16, MyFontEnum.Red);
+                        Utilities.ShowNotification("Too far away from locked altitude!", 16, MyFontEnum.Red);
                         return false;
                     }
 
                     target = center + (dir * altitudeLock);
 
-                    MyAPIGateway.Utilities.ShowNotification("Locked to altitude.", 16, MyFontEnum.Blue);
+                    Utilities.ShowNotification("Locked to altitude.", 16, MyFontEnum.Blue);
 
                     hudUnablePlayed = false;
                 }
@@ -690,7 +755,7 @@ namespace Digi.Concrete
 
                     if(found > 0)
                     {
-                        bool localPlayerFound = ents.RemoveWhere((e) => e.EntityId == controlled.Entity.EntityId) > 0;
+                        var localPlayerFound = ents.RemoveWhere((e) => e.EntityId == MyAPIGateway.Session.ControlledObject.Entity.EntityId) > 0;
 
                         SetCrosshairColor(CROSSHAIR_BLOCKED);
                         SetToolStatus((found == 1 ? (localPlayerFound ? "You're in the way!" : "Something is in the way!") : (localPlayerFound ? "You and " + (ents.Count - 1) : "" + ents.Count) + " things are in the way!"), MyFontEnum.Red, 1500);
@@ -724,7 +789,7 @@ namespace Digi.Concrete
 
         private Vector3I RotateInput(bool newPressed)
         {
-            var input = MyAPIGateway.Input;
+            var input = Input;
 
             if(newPressed)
             {
@@ -744,30 +809,6 @@ namespace Digi.Concrete
             }
         }
 
-        private IMyVoxelBase GetVoxelMapAt(Vector3D pos)
-        {
-            var maps = new List<IMyVoxelBase>();
-            MyAPIGateway.Session.VoxelMaps.GetInstances(maps);
-            Vector3D min;
-            Vector3D max;
-
-            // TODO get the smallest of the matches? or better yet just get all of them and give the player a choice
-
-            foreach(var voxel in maps)
-            {
-                if(voxel.StorageName == null)
-                    continue;
-
-                min = voxel.PositionLeftBottomCorner;
-                max = min + voxel.Storage.Size;
-
-                if(min.X <= pos.X && pos.X <= max.X && min.Y <= pos.Y && pos.Y <= max.Y && min.Z <= pos.Z && pos.Z <= max.Z)
-                    return voxel;
-            }
-
-            return null;
-        }
-
         public void MessageEntered(string msg, ref bool send)
         {
             if(msg.StartsWith("/concrete", StringComparison.InvariantCultureIgnoreCase))
@@ -778,9 +819,10 @@ namespace Digi.Concrete
 
                 if(msg.StartsWith("help", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    var inputFire = InputHandler.GetFriendlyStringForControl(MyAPIGateway.Input.GetGameControl(MyControlsSpace.PRIMARY_TOOL_ACTION));
-                    var inputAlign = InputHandler.GetFriendlyStringForControl(MyAPIGateway.Input.GetGameControl(MyControlsSpace.CUBE_BUILDER_CUBESIZE_MODE));
-                    var inputGrid = InputHandler.GetFriendlyStringForControl(MyAPIGateway.Input.GetGameControl(MyControlsSpace.FREE_ROTATION));
+                    var inputFire = InputHandler.GetAssignedGameControlNames(MyControlsSpace.PRIMARY_TOOL_ACTION);
+                    var inputAlign = InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_BUILDER_CUBESIZE_MODE);
+                    var inputGrid = InputHandler.GetAssignedGameControlNames(MyControlsSpace.FREE_ROTATION);
+                    var inputCycleMap = InputHandler.GetAssignedGameControlNames(MyControlsSpace.USE);
                     var str = new StringBuilder();
 
                     str.AppendLine("The concrete tool is a hand-held tool that allows\n  placement of concrete on to asteroids or planets.");
@@ -805,15 +847,17 @@ namespace Digi.Concrete
                     str.AppendLine();
                     str.AppendLine("While in 'snap to altitude' mode you can hold Shift to lock\n  to the current altitude.");
                     str.AppendLine();
+                    str.Append("If target collides with multiple voxel maps then you can\n  use " + inputCycleMap + " to cycle between them.").AppendLine();
+                    str.AppendLine();
                     str.AppendLine("Use the cube rotation keys to rotate the placement box.");
                     str.AppendLine("They can also be used with Shift for 15 degree increments\n  or Alt for 0.1 degree increments instead of 1.");
 
-                    MyAPIGateway.Utilities.ShowMissionScreen("Concrete Tool Help", null, null, str.ToString(), null, "Close");
+                    Utilities.ShowMissionScreen("Concrete Tool Help", null, null, str.ToString(), null, "Close");
                     return;
                 }
 
-                MyAPIGateway.Utilities.ShowMessage(Log.modName, "Commands:");
-                MyAPIGateway.Utilities.ShowMessage("/concrete help ", "key combination information");
+                Utilities.ShowMessage(Log.modName, "Commands:");
+                Utilities.ShowMessage("/concrete help ", "key combination information");
             }
         }
     }

@@ -94,6 +94,7 @@
     <Compile Include="Concrete.cs" />
     <Compile Include="InputHandler.cs" />
     <Compile Include="Log.cs" />
+    <Compile Include="Tool.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
