@@ -359,7 +359,7 @@ namespace Digi.Concrete
             {
                 selectedVoxelMap = maps[0];
             }
-            else
+            else if(maps.Count > 1)
             {
                 if(Input.IsNewGameControlPressed(MyControlsSpace.USE) && InputHandler.IsInputReadable())
                     selectedVoxelMapIndex++;
