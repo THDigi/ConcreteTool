@@ -1,5 +1,6 @@
 ﻿using System;
 using Sandbox.Common.ObjectBuilders;
+using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Weapons;
 using VRage.Game.Components;
@@ -30,11 +31,11 @@ namespace Digi.Concrete
                         return;
 
                     first = false; // don't move this up because it needs to repeat until mod and character are available for a valid check
-                    var gun = Entity as IMyAutomaticRifleGun;
+                    var gun = (IMyGunBaseUser)Entity;
 
-                    if(gun?.Owner != null && gun.OwnerId == MyAPIGateway.Session.Player.PlayerID) // check if the local player is holding it
+                    if(gun?.Owner != null && gun.OwnerId == MyAPIGateway.Session.Player.IdentityId) // check if the local player is holding it
                     {
-                        mod.DrawTool(gun);
+                        mod.DrawTool((IMyAutomaticRifleGun)Entity);
                     }
                 }
             }
