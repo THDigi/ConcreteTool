@@ -9,7 +9,9 @@ using VRage.ObjectBuilders;
 
 namespace Digi.Concrete
 {
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_AutomaticRifle), Concrete.CONCRETE_TOOL)]
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_AutomaticRifle),
+        useEntityUpdate: true,
+        entityBuilderSubTypeNames: Concrete.CONCRETE_TOOL)]
     public class Tool : MyGameLogicComponent
     {
         private bool first = true;
@@ -37,17 +39,14 @@ namespace Digi.Concrete
                     {
                         mod.DrawTool((IMyAutomaticRifleGun)Entity);
                     }
+
+                    Entity.Components.Remove<Tool>();
                 }
             }
             catch(Exception e)
             {
                 Log.Error(e);
             }
-        }
-
-        public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false)
-        {
-            return Entity.GetObjectBuilder(copy);
         }
     }
 }

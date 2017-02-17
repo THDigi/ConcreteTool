@@ -1,23 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
-using Sandbox.ModAPI.Interfaces;
 using Sandbox.ModAPI.Weapons;
+using VRage;
+using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
-using VRageMath;
-using VRage;
-using VRage.ModAPI;
-using VRage.Input;
-using VRage.Game;
 using VRage.Game.ModAPI;
-using VRage.Library.Collections;
+using VRage.Input;
+using VRage.ModAPI;
+using VRageMath;
+
 using static Sandbox.ModAPI.MyAPIGateway;
 
 namespace Digi.Concrete
@@ -38,9 +35,10 @@ namespace Digi.Concrete
             RAMP,
         }
 
-        public static bool init { get; private set; }
-        public static bool isThisDedicated { get; private set; }
         public static Concrete instance = null;
+
+        public bool init { get; private set; }
+        public bool isThisDedicated { get; private set; }
 
         public IMyAutomaticRifleGun holdingTool = null;
         public long lastShotTick = 0;
@@ -65,9 +63,9 @@ namespace Digi.Concrete
         private bool hudUnablePlayed = false;
         private byte skipSoundTicks = 0;
 
-        private static MyVoxelMaterialDefinition material = null;
-        private static readonly HashSet<IMyEntity> ents = new HashSet<IMyEntity>();
-        private static readonly List<IMyVoxelBase> maps = new List<IMyVoxelBase>();
+        private MyVoxelMaterialDefinition material = null;
+        private readonly HashSet<IMyEntity> ents = new HashSet<IMyEntity>();
+        private readonly List<IMyVoxelBase> maps = new List<IMyVoxelBase>();
 
         public const ushort PACKET = 63311;
 
@@ -77,8 +75,8 @@ namespace Digi.Concrete
         public const string CONCRETE_TOOL = "ConcreteTool";
         public const string CONCRETE_AMMO_ID = "ConcreteMix";
         public const string CONCRETE_GHOST_ID = "ConcreteToolGhost";
-        private static readonly MyObjectBuilder_AmmoMagazine CONCRETE_MAG = new MyObjectBuilder_AmmoMagazine() { SubtypeName = CONCRETE_AMMO_ID, ProjectilesCount = 1 };
-        private static readonly MyDefinitionId CONCRETE_MAG_DEFID = new MyDefinitionId(typeof(MyObjectBuilder_AmmoMagazine), CONCRETE_AMMO_ID);
+        private readonly MyObjectBuilder_AmmoMagazine CONCRETE_MAG = new MyObjectBuilder_AmmoMagazine() { SubtypeName = CONCRETE_AMMO_ID, ProjectilesCount = 1 };
+        private readonly MyDefinitionId CONCRETE_MAG_DEFID = new MyDefinitionId(typeof(MyObjectBuilder_AmmoMagazine), CONCRETE_AMMO_ID);
 
         public const float CONCRETE_USE_PER_METER_SQUARE = 1f;
 
@@ -86,11 +84,11 @@ namespace Digi.Concrete
 
         private const long DELAY_SHOOT = (TimeSpan.TicksPerMillisecond * 100);
 
-        //private static readonly Vector4 BOX_COLOR = new Vector4(0.0f, 0.0f, 1.0f, 0.05f);
+        //private readonly Vector4 BOX_COLOR = new Vector4(0.0f, 0.0f, 1.0f, 0.05f);
 
-        private static Color CROSSHAIR_INVALID = new Color(255, 0, 0);
-        private static Color CROSSHAIR_VALID = new Color(0, 255, 0);
-        private static Color CROSSHAIR_BLOCKED = new Color(255, 255, 0);
+        private readonly Color CROSSHAIR_INVALID = new Color(255, 0, 0);
+        private readonly Color CROSSHAIR_VALID = new Color(0, 255, 0);
+        private readonly Color CROSSHAIR_BLOCKED = new Color(255, 255, 0);
 
         public void Init()
         {
@@ -361,7 +359,7 @@ namespace Digi.Concrete
             }
             else if(maps.Count > 1)
             {
-                if(Input.IsNewGameControlPressed(MyControlsSpace.USE) && InputHandler.IsInputReadable())
+                if(InputHandler.IsInputReadable() && Input.IsNewGameControlPressed(MyControlsSpace.USE))
                     selectedVoxelMapIndex++;
 
                 if(selectedVoxelMapIndex >= maps.Count)
@@ -405,11 +403,7 @@ namespace Digi.Concrete
             toolStatus?.Hide();
         }
 
-#if STABLE // HACK >>> STABLE condition
-        private void SetToolStatus(string text, MyFontEnum font, int aliveTime = 300)
-#else
         private void SetToolStatus(string text, string font, int aliveTime = 300)
-#endif
         {
             toolStatus.Font = font;
             toolStatus.Text = text;
@@ -423,8 +417,7 @@ namespace Digi.Concrete
             IMyVoxelShape placeShape = null;
 
             var input = Input;
-            bool inputReadable = true; // InputHandler.IsInputReadable();
-                                       // HACK undo this comment ^ once InputHandler.IsInputReadable() no longer throws exceptions when not in a menu; also remove all other InputHandler.IsInputReadable() instances from the code
+            bool inputReadable = InputHandler.IsInputReadable();
             bool removeMode = false;
 
             if(inputReadable)
@@ -432,7 +425,7 @@ namespace Digi.Concrete
                 var scroll = input.DeltaMouseScrollWheelValue();
                 removeMode = input.IsAnyCtrlKeyPressed();
 
-                if(scroll != 0 && InputHandler.IsInputReadable())
+                if(scroll != 0)
                 {
                     if(input.IsAnyCtrlKeyPressed())
                     {
@@ -484,7 +477,7 @@ namespace Digi.Concrete
                     */
                 }
 
-                if(input.IsNewGameControlPressed(MyControlsSpace.FREE_ROTATION) && InputHandler.IsInputReadable())
+                if(input.IsNewGameControlPressed(MyControlsSpace.FREE_ROTATION))
                 {
                     if(++snap > 2)
                         snap = 0;
@@ -508,7 +501,7 @@ namespace Digi.Concrete
                 bool shift = input.IsAnyShiftKeyPressed();
                 var rotateInput = RotateInput(shift);
 
-                if((rotateInput.X != 0 || rotateInput.Y != 0 || rotateInput.Z != 0) && InputHandler.IsInputReadable())
+                if((rotateInput.X != 0 || rotateInput.Y != 0 || rotateInput.Z != 0))
                 {
                     if(shift || ++skipSoundTicks > 15)
                     {
@@ -530,7 +523,7 @@ namespace Digi.Concrete
                         placeMatrix *= MatrixD.CreateFromAxisAngle(placeMatrix.Forward, MathHelper.ToRadians(rotateInput.Z * angle));
                 }
 
-                if(input.IsNewGameControlPressed(MyControlsSpace.CUBE_BUILDER_CUBESIZE_MODE) && InputHandler.IsInputReadable())
+                if(input.IsNewGameControlPressed(MyControlsSpace.CUBE_BUILDER_CUBESIZE_MODE))
                 {
                     PlaySound("HudItem", 0.1f);
 
@@ -610,7 +603,7 @@ namespace Digi.Concrete
                 int altitude = (int)Math.Round(dir.Normalize(), 0);
                 target = center + (dir * altitude);
 
-                if(inputReadable && input.IsAnyShiftKeyPressed() && InputHandler.IsInputReadable())
+                if(inputReadable && input.IsAnyShiftKeyPressed())
                 {
                     if(input.IsNewKeyPressed(MyKeys.Shift))
                         altitudeLock = altitude;

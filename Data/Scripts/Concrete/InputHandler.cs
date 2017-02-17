@@ -12,26 +12,14 @@ namespace Digi
     {
         public static bool IsInputReadable()
         {
-            // TODO detect properly: escape menu, F10 and F11 menus, mission screens, yes/no notifications.
-
-            if(Gui.ChatEntryVisible || Gui.GetCurrentScreen != MyTerminalPageEnum.None)
-                return false;
-
-            try // HACK ActiveGamePlayScreen throws NRE when called while not in a menu
-            {
-                return Gui.ActiveGamePlayScreen == null;
-            }
-            catch(Exception)
-            {
-                return true;
-            }
+            return !Gui.IsCursorVisible && !Gui.ChatEntryVisible;
         }
 
         public static string GetAssignedGameControlNames(MyStringId controlId)
         {
             return GetAssignedGameControlNames(Input.GetGameControl(controlId));
         }
-        
+
         public static string GetAssignedGameControlNames(IMyControl control)
         {
             var inputs = new List<string>();
