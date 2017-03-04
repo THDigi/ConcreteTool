@@ -25,23 +25,28 @@ namespace Digi.Concrete
         {
             try
             {
-                if(first)
+                if(!first)
+                    return;
+
+                var mod = Concrete.instance;
+
+                if(mod == null)
+                    return;
+
+                first = false; // don't move this up because it needs to repeat until mod and character are available for a valid check
+
+                if(MyAPIGateway.Session.Player != null) // it's null for DS and might be for other cases, we don't care for those cases
                 {
-                    var mod = Concrete.instance;
-
-                    if(mod == null)
-                        return;
-
-                    first = false; // don't move this up because it needs to repeat until mod and character are available for a valid check
                     var gun = (IMyGunBaseUser)Entity;
 
-                    if(gun?.Owner != null && gun.OwnerId == MyAPIGateway.Session.Player.IdentityId) // check if the local player is holding it
+                    // check if the local player is holding it
+                    if(gun?.Owner != null && gun.OwnerId == MyAPIGateway.Session.Player.IdentityId)
                     {
                         mod.DrawTool((IMyAutomaticRifleGun)Entity);
                     }
-
-                    Entity.Components.Remove<Tool>();
                 }
+
+                Entity.Components.Remove<Tool>();
             }
             catch(Exception e)
             {
