@@ -13,6 +13,7 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Input;
 using VRage.ModAPI;
+using VRage.Utils;
 using VRageMath;
 
 using static Sandbox.ModAPI.MyAPIGateway;
@@ -77,6 +78,9 @@ namespace Digi.Concrete
         public const string CONCRETE_GHOST_ID = "ConcreteToolGhost";
         private readonly MyObjectBuilder_AmmoMagazine CONCRETE_MAG = new MyObjectBuilder_AmmoMagazine() { SubtypeName = CONCRETE_AMMO_ID, ProjectilesCount = 1 };
         private readonly MyDefinitionId CONCRETE_MAG_DEFID = new MyDefinitionId(typeof(MyObjectBuilder_AmmoMagazine), CONCRETE_AMMO_ID);
+
+        private static readonly MyStringId MATERIAL_SQUARE = MyStringId.GetOrCompute("Square");
+        private static readonly MyStringId MATERIAL_FADEOUTLINE = MyStringId.GetOrCompute("ConcreteTool_FadeOutLine");
 
         public const float CONCRETE_USE_PER_METER_SQUARE = 1f;
 
@@ -239,7 +243,7 @@ namespace Digi.Concrete
                         {
                             var matrix = ent.WorldMatrix;
                             var box = (BoundingBoxD)ent.LocalAABB;
-                            MySimpleObjectDraw.DrawTransparentBox(ref matrix, ref box, ref color, MySimpleObjectRasterizer.Wireframe, 1, 0.01f, "Square", "Square", false);
+                            MySimpleObjectDraw.DrawTransparentBox(ref matrix, ref box, ref color, MySimpleObjectRasterizer.Wireframe, 1, 0.01f, MATERIAL_SQUARE, MATERIAL_SQUARE, false);
                         }
                     }
                 }
@@ -256,7 +260,7 @@ namespace Digi.Concrete
                         var matrix = selectedVoxelMap.WorldMatrix;
                         var box = (BoundingBoxD)selectedVoxelMap.LocalAABB;
                         var color = Color.Green * MathHelper.Lerp(0.5f, 0f, 1f - ((float)selectedVoxelMapTicks / (float)VOXEL_MAP_SELECTED_TICKS));
-                        MySimpleObjectDraw.DrawTransparentBox(ref matrix, ref box, ref color, MySimpleObjectRasterizer.Wireframe, 1, 0.01f, "Square", "Square", false);
+                        MySimpleObjectDraw.DrawTransparentBox(ref matrix, ref box, ref color, MySimpleObjectRasterizer.Wireframe, 1, 0.01f, MATERIAL_SQUARE, MATERIAL_SQUARE, false);
                     }
                 }
 
@@ -344,11 +348,11 @@ namespace Digi.Concrete
             //var sphere = new BoundingSphereD(pos, 1);
             //var entities = new List<MyEntity>(); // TODO global
             //MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref sphere, entities, MyEntityQueryType.Static);
-
+            //
             //foreach(var ent in entities)
             //{
             //    var map = ent as IMyVoxelBase;
-
+            //
             //    if(map != null)
             //        maps.Add(map);
             //}
@@ -575,26 +579,25 @@ namespace Digi.Concrete
                 const float gridLineWidth = 0.01f;
                 const float gridLineLength = 3f;
                 const float gridLineLengthHalf = gridLineLength / 2;
-                const string gridLineMaterial = "ConcreteTool_FadeOutLine";
 
                 var upHalf = (Vector3.Up / 2);
                 var rightHalf = (Vector3.Right / 2);
                 var forwardHalf = (Vector3.Forward / 2);
 
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target + upHalf + -rightHalf + Vector3.Forward * gridLineLengthHalf, Vector3.Backward, gridLineLength, gridLineWidth);
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target + upHalf + rightHalf + Vector3.Forward * gridLineLengthHalf, Vector3.Backward, gridLineLength, gridLineWidth);
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target + -upHalf + -rightHalf + Vector3.Forward * gridLineLengthHalf, Vector3.Backward, gridLineLength, gridLineWidth);
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target + -upHalf + rightHalf + Vector3.Forward * gridLineLengthHalf, Vector3.Backward, gridLineLength, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target + upHalf + -rightHalf + Vector3.Forward * gridLineLengthHalf, Vector3.Backward, gridLineLength, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target + upHalf + rightHalf + Vector3.Forward * gridLineLengthHalf, Vector3.Backward, gridLineLength, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target + -upHalf + -rightHalf + Vector3.Forward * gridLineLengthHalf, Vector3.Backward, gridLineLength, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target + -upHalf + rightHalf + Vector3.Forward * gridLineLengthHalf, Vector3.Backward, gridLineLength, gridLineWidth);
 
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target + forwardHalf + -rightHalf + Vector3.Up * gridLineLengthHalf, Vector3.Down, gridLineLength, gridLineWidth);
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target + forwardHalf + rightHalf + Vector3.Up * gridLineLengthHalf, Vector3.Down, gridLineLength, gridLineWidth);
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target + -forwardHalf + -rightHalf + Vector3.Up * gridLineLengthHalf, Vector3.Down, gridLineLength, gridLineWidth);
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target + -forwardHalf + rightHalf + Vector3.Up * gridLineLengthHalf, Vector3.Down, gridLineLength, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target + forwardHalf + -rightHalf + Vector3.Up * gridLineLengthHalf, Vector3.Down, gridLineLength, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target + forwardHalf + rightHalf + Vector3.Up * gridLineLengthHalf, Vector3.Down, gridLineLength, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target + -forwardHalf + -rightHalf + Vector3.Up * gridLineLengthHalf, Vector3.Down, gridLineLength, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target + -forwardHalf + rightHalf + Vector3.Up * gridLineLengthHalf, Vector3.Down, gridLineLength, gridLineWidth);
 
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target + forwardHalf + -upHalf + Vector3.Right * gridLineLengthHalf, Vector3.Left, gridLineLength, gridLineWidth);
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target + forwardHalf + upHalf + Vector3.Right * gridLineLengthHalf, Vector3.Left, gridLineLength, gridLineWidth);
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target + -forwardHalf + -upHalf + Vector3.Right * gridLineLengthHalf, Vector3.Left, gridLineLength, gridLineWidth);
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target + -forwardHalf + upHalf + Vector3.Right * gridLineLengthHalf, Vector3.Left, gridLineLength, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target + forwardHalf + -upHalf + Vector3.Right * gridLineLengthHalf, Vector3.Left, gridLineLength, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target + forwardHalf + upHalf + Vector3.Right * gridLineLengthHalf, Vector3.Left, gridLineLength, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target + -forwardHalf + -upHalf + Vector3.Right * gridLineLengthHalf, Vector3.Left, gridLineLength, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target + -forwardHalf + upHalf + Vector3.Right * gridLineLengthHalf, Vector3.Left, gridLineLength, gridLineWidth);
             }
             else if(snap == 2) // snap to distance increments from center
             {
@@ -633,16 +636,15 @@ namespace Digi.Concrete
                 const float gridLineWidth = 0.01f;
                 const float gridLineLength = 3f;
                 const float gridLineLengthHalf = gridLineLength / 2;
-                const string gridLineMaterial = "ConcreteTool_FadeOutLine";
 
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target + (dir * 3.75), -dir, 7.5f, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target + (dir * 3.75), -dir, 7.5f, gridLineWidth);
 
                 var vertical = Vector3D.Cross(dir, view.Forward);
 
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target - (dir * 1.5) + vertical * gridLineLengthHalf, -vertical, gridLineLength, gridLineWidth);
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target - (dir * 0.5) + vertical * gridLineLengthHalf, -vertical, gridLineLength, gridLineWidth);
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target + (dir * 0.5) + vertical * gridLineLengthHalf, -vertical, gridLineLength, gridLineWidth);
-                MyTransparentGeometry.AddLineBillboard(gridLineMaterial, gridColor, target + (dir * 1.5) + vertical * gridLineLengthHalf, -vertical, gridLineLength, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target - (dir * 1.5) + vertical * gridLineLengthHalf, -vertical, gridLineLength, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target - (dir * 0.5) + vertical * gridLineLengthHalf, -vertical, gridLineLength, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target + (dir * 0.5) + vertical * gridLineLengthHalf, -vertical, gridLineLength, gridLineWidth);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, target + (dir * 1.5) + vertical * gridLineLengthHalf, -vertical, gridLineLength, gridLineWidth);
             }
 
             var colorWire = Color.Green * 0.5f;
@@ -667,8 +669,8 @@ namespace Digi.Concrete
                 shape.Boundaries = box;
                 placeShape = shape;
 
-                MySimpleObjectDraw.DrawTransparentBox(ref placeMatrix, ref box, ref colorWire, MySimpleObjectRasterizer.Wireframe, 1, 0.01f, "Square", "Square", false);
-                MySimpleObjectDraw.DrawTransparentBox(ref placeMatrix, ref box, ref colorFace, MySimpleObjectRasterizer.Solid, 1, 0.01f, "Square", "Square", false);
+                MySimpleObjectDraw.DrawTransparentBox(ref placeMatrix, ref box, ref colorWire, MySimpleObjectRasterizer.Wireframe, 1, 0.01f, MATERIAL_SQUARE, MATERIAL_SQUARE, false);
+                MySimpleObjectDraw.DrawTransparentBox(ref placeMatrix, ref box, ref colorFace, MySimpleObjectRasterizer.Solid, 1, 0.01f, MATERIAL_SQUARE, MATERIAL_SQUARE, false);
             }
 
             // TODO shapes?
