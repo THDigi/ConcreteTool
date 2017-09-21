@@ -9,6 +9,8 @@ using VRage.ObjectBuilders;
 
 namespace Digi.Concrete
 {
+    // TODO remove this class entirely
+
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_AutomaticRifle),
         useEntityUpdate: false,
         entityBuilderSubTypeNames: Concrete.CONCRETE_TOOL)]
@@ -45,8 +47,6 @@ namespace Digi.Concrete
                         mod.DrawTool((IMyAutomaticRifleGun)Entity);
                     }
                 }
-
-                Entity.Components.Remove<Tool>();
             }
             catch(Exception e)
             {

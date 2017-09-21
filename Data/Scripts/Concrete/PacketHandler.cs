@@ -81,5 +81,24 @@ namespace Digi
             Array.Copy(data, 0, bytes, index, data.Length);
             index += data.Length;
         }
+
+        public static void AddToArray(Quaternion value, ref int index, ref byte[] bytes)
+        {
+            var data = BitConverter.GetBytes(value.X);
+            Array.Copy(data, 0, bytes, index, data.Length);
+            index += data.Length;
+
+            data = BitConverter.GetBytes(value.Y);
+            Array.Copy(data, 0, bytes, index, data.Length);
+            index += data.Length;
+
+            data = BitConverter.GetBytes(value.Z);
+            Array.Copy(data, 0, bytes, index, data.Length);
+            index += data.Length;
+
+            data = BitConverter.GetBytes(value.W);
+            Array.Copy(data, 0, bytes, index, data.Length);
+            index += data.Length;
+        }
     }
 }

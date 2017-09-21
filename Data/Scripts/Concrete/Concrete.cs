@@ -172,33 +172,36 @@ namespace Digi.Concrete
                 long voxelsId = BitConverter.ToInt64(bytes, index);
                 index += sizeof(long);
 
-                var voxels = MyAPIGateway.Entities.GetEntityById(voxelsId) as IMyVoxelMap;
+                var voxels = MyAPIGateway.Entities.GetEntityById(voxelsId) as IMyVoxelBase;
 
                 if(voxels == null)
+                {
+                    Log.Error($"Received packet with wrong entity; entityId={voxelsId}; expected IMyVoxelBase got ={MyAPIGateway.Entities.GetEntityById(voxelsId)} type={type}");
                     return;
+                }
 
                 float scale = BitConverter.ToSingle(bytes, index);
                 index += sizeof(float);
 
                 Vector3D origin = new Vector3D(BitConverter.ToDouble(bytes, index),
-                                          BitConverter.ToDouble(bytes, index + sizeof(double)),
-                                          BitConverter.ToDouble(bytes, index + sizeof(double) * 2));
+                                              BitConverter.ToDouble(bytes, index + sizeof(double)),
+                                              BitConverter.ToDouble(bytes, index + sizeof(double) * 2));
                 index += sizeof(double) * 3;
 
-                Vector3 forward = new Vector3(BitConverter.ToSingle(bytes, index),
-                                          BitConverter.ToSingle(bytes, index + sizeof(float)),
-                                          BitConverter.ToSingle(bytes, index + sizeof(float) * 2));
-                index += sizeof(float) * 3;
-
-                Vector3 up = new Vector3(BitConverter.ToSingle(bytes, index),
-                                     BitConverter.ToSingle(bytes, index + sizeof(float)),
-                                     BitConverter.ToSingle(bytes, index + sizeof(float) * 2));
-                index += sizeof(float) * 3;
+                Quaternion q = new Quaternion(BitConverter.ToSingle(bytes, index),
+                                              BitConverter.ToSingle(bytes, index + sizeof(float)),
+                                              BitConverter.ToSingle(bytes, index + sizeof(float) * 2),
+                                              BitConverter.ToSingle(bytes, index + sizeof(float) * 3));
+                index += sizeof(float) * 4;
 
                 var shape = MyAPIGateway.Session.VoxelMaps.GetBoxVoxelHand();
+
                 var vec = (Vector3D.One / 2) * scale;
                 shape.Boundaries = new BoundingBoxD(-vec, vec);
-                shape.Transform = MatrixD.CreateWorld(origin, forward, up);
+
+                var m = MatrixD.CreateFromQuaternion(q);
+                m.Translation = origin;
+                shape.Transform = m;
 
                 if(type == PacketType.PLACE_VOXEL || type == PacketType.PAINT_VOXEL)
                 {
@@ -211,7 +214,10 @@ namespace Digi.Concrete
                     var character = MyAPIGateway.Entities.GetEntityById(charId) as IMyCharacter;
 
                     if(character == null)
+                    {
+                        Log.Error($"Received packet with unknown character entityId={charId}; found={MyAPIGateway.Entities.GetEntityById(charId)} type={type}");
                         return;
+                    }
 
                     VoxelAction(type, voxels, shape, scale, materialIndex, character);
                 }
@@ -233,27 +239,28 @@ namespace Digi.Concrete
         {
             if(MyAPIGateway.Session.IsServer)
             {
-                switch(type)
+                bool place = (type == PacketType.PLACE_VOXEL);
+
+                if(place || type == PacketType.PAINT_VOXEL)
                 {
-                    case PacketType.PLACE_VOXEL:
-                        {
+                    var inv = character.GetInventory(0);
+                    var use = GetAmmoUsage(type, scale);
+
+                    if(inv.GetItemAmount(CONCRETE_MAG_DEFID) > use)
+                    {
+                        if(place)
                             MyAPIGateway.Session.VoxelMaps.FillInShape(voxels, shape, materialIndex);
-                            var inv = character.GetInventory(0) as IMyInventory;
-                            inv.RemoveItemsOfType((MyFixedPoint)(CONCRETE_PLACE_USE_PERMETER * scale), CONCRETE_MAG, false); // scale ammo usage with placement size
-                            break;
-                        }
-                    case PacketType.PAINT_VOXEL:
-                        {
+                        else
                             MyAPIGateway.Session.VoxelMaps.PaintInShape(voxels, shape, materialIndex);
-                            var inv = character.GetInventory(0) as IMyInventory;
-                            inv.RemoveItemsOfType((MyFixedPoint)(CONCRETE_PAINT_USE_PERMETER * scale), CONCRETE_MAG, false); // scale ammo usage with placement size
-                            break;
-                        }
-                    case PacketType.REMOVE_VOXEL:
-                        {
-                            MyAPIGateway.Session.VoxelMaps.CutOutShape(voxels, shape);
-                            break;
-                        }
+
+                        inv.RemoveItemsOfType(use, CONCRETE_MAG, false);
+                    }
+                    else
+                        Log.Error($"Not enough ammo ({use}) for {type} on {character.DisplayName} ({character.EntityId})");
+                }
+                else if(type == PacketType.REMOVE_VOXEL)
+                {
+                    MyAPIGateway.Session.VoxelMaps.CutOutShape(voxels, shape);
                 }
             }
             else
@@ -261,9 +268,12 @@ namespace Digi.Concrete
                 bool extraArgs = (type == PacketType.PLACE_VOXEL || type == PacketType.PAINT_VOXEL);
 
                 if(extraArgs && character == null)
-                    throw new Exception("Character is null!");
+                {
+                    Log.Error($"VoxelAction() - Character is null! PacketType={type}; voxels.EntityId={voxels.EntityId}");
+                    return;
+                }
 
-                int len = sizeof(byte) + sizeof(long) + sizeof(float) + (sizeof(double) * 3) + (sizeof(float) * 3) + (sizeof(float) * 3);
+                int len = sizeof(byte) + sizeof(long) + sizeof(float) + (sizeof(double) * 3) + (sizeof(float) * 4);
 
                 if(extraArgs)
                     len += sizeof(long) + sizeof(byte);
@@ -275,8 +285,7 @@ namespace Digi.Concrete
                 PacketHandler.AddToArray(voxels.EntityId, ref len, ref bytes);
                 PacketHandler.AddToArray(scale, ref len, ref bytes);
                 PacketHandler.AddToArray(shape.Transform.Translation, ref len, ref bytes);
-                PacketHandler.AddToArray((Vector3)shape.Transform.Forward, ref len, ref bytes);
-                PacketHandler.AddToArray((Vector3)shape.Transform.Up, ref len, ref bytes);
+                PacketHandler.AddToArray(Quaternion.CreateFromRotationMatrix(shape.Transform), ref len, ref bytes);
 
                 if(extraArgs)
                 {
@@ -493,7 +502,7 @@ namespace Digi.Concrete
             snapStatus.Show();
         }
 
-        private bool ToolProcess(IMyVoxelBase voxels, Vector3D target, MatrixD view, bool trigger, bool paint)
+        private bool ToolProcess(IMyVoxelBase voxels, Vector3D target, MatrixD view, bool primaryAction, bool paintAction)
         {
             placeMatrix.Translation = target;
 
@@ -501,6 +510,7 @@ namespace Digi.Concrete
             IMyVoxelShape placeShape = null;
 
             bool inputReadable = InputHandler.IsInputReadable();
+            bool invalidPlacement = false;
             bool removeMode = false;
             bool shift = false;
             bool ctrl = false;
@@ -509,6 +519,7 @@ namespace Digi.Concrete
 
             const string FONTCOLOR_INFO = MyFontEnum.White;
             const string FONTCOLOR_CONSTANT = MyFontEnum.Blue;
+            const float GRID_COLOR_ALPHA = 0.6f;
 
             if(inputReadable)
             {
@@ -802,10 +813,6 @@ namespace Digi.Concrete
 
                 SetAlignStatus((planet != null ? "Align Lock: towards center of planet" : "Align Lock: towards center of asteroid"), 16, FONTCOLOR_CONSTANT);
             }
-
-            const float GRID_COLOR_ALPHA = 0.6f;
-
-            bool invalidPlacement = false;
 
             if(snap == 1) // snap to voxel grid
             {
@@ -1122,7 +1129,6 @@ namespace Digi.Concrete
             //        }
             //}
 
-
             if(invalidPlacement)
                 return false;
 
@@ -1131,14 +1137,30 @@ namespace Digi.Concrete
             if(cooldown > 0 && --cooldown > 0)
                 return false;
 
-            if(paint)
+            #region Ammo check
+            if((primaryAction && !removeMode) || paintAction)
+            {
+                var character = MyAPIGateway.Session.Player.Character;
+                var inv = character.GetInventory();
+                var type = (paintAction ? PacketType.PAINT_VOXEL : (removeMode ? PacketType.REMOVE_VOXEL : PacketType.PLACE_VOXEL));
+
+                if(inv.GetItemAmount(CONCRETE_MAG_DEFID) < GetAmmoUsage(type, placeScale))
+                {
+                    PlaySound("HudUnable");
+                    SetToolStatus($"You need Concrete Mix to use this tool!", 1500, MyFontEnum.Red);
+                    return false;
+                }
+            }
+            #endregion Ammo check
+
+            if(paintAction)
             {
                 VoxelAction(PacketType.PAINT_VOXEL, voxels, placeShape, placeScale, material.Index, Session.Player.Character);
                 PlaySound("HudColorBlock");
                 cooldown = cooldownTicks;
                 return true;
             }
-            else if(trigger)
+            else if(primaryAction)
             {
                 ++holdPress;
 
@@ -1199,6 +1221,17 @@ namespace Digi.Concrete
             }
 
             return false;
+        }
+
+        private static MyFixedPoint GetAmmoUsage(PacketType type, float scale)
+        {
+            if(type == PacketType.PLACE_VOXEL)
+                return (MyFixedPoint)(CONCRETE_PLACE_USE_PERMETER * scale);
+
+            if(type == PacketType.PAINT_VOXEL)
+                return (MyFixedPoint)(CONCRETE_PLACE_USE_PERMETER * scale / 2);
+
+            return 0;
         }
 
         private void AimToCenter(IMyVoxelBase voxels, Vector3D forward)
