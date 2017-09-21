@@ -15,25 +15,46 @@ namespace Digi
             return !Gui.IsCursorVisible && !Gui.ChatEntryVisible;
         }
 
-        public static string GetAssignedGameControlNames(MyStringId controlId)
+        public static string GetAssignedGameControlNames(MyStringId controlId, bool oneResult = false)
         {
-            return GetAssignedGameControlNames(Input.GetGameControl(controlId));
+            return GetAssignedGameControlNames(Input.GetGameControl(controlId), oneResult);
         }
 
-        public static string GetAssignedGameControlNames(IMyControl control)
+        public static string GetAssignedGameControlNames(IMyControl control, bool oneResult = false)
         {
-            var inputs = new List<string>();
+            List<string> inputs = (oneResult ? null : new List<string>());
 
             if(control.GetMouseControl() != MyMouseButtonsEnum.None)
-                inputs.Add(Input.GetName(control.GetMouseControl()));
+            {
+                string name = Input.GetName(control.GetMouseControl());
+
+                if(oneResult)
+                    return name;
+                else
+                    inputs.Add(name);
+            }
 
             if(control.GetKeyboardControl() != MyKeys.None)
-                inputs.Add(Input.GetKeyName(control.GetKeyboardControl()));
+            {
+                string name = Input.GetKeyName(control.GetKeyboardControl());
+
+                if(oneResult)
+                    return name;
+                else
+                    inputs.Add(name);
+            }
 
             if(control.GetSecondKeyboardControl() != MyKeys.None)
-                inputs.Add(Input.GetKeyName(control.GetSecondKeyboardControl()));
+            {
+                string name = Input.GetKeyName(control.GetSecondKeyboardControl());
 
-            return (inputs.Count == 0 ? Input.GetUnassignedName() : string.Join(" or ", inputs));
+                if(oneResult)
+                    return name;
+                else
+                    inputs.Add(name);
+            }
+
+            return (oneResult || inputs.Count == 0 ? "{Unassigned:" + control.GetControlName() + "}" : string.Join(" or ", inputs));
         }
     }
 }

@@ -15,24 +15,45 @@
 			<SpawnsFromMeteorites>false</SpawnsFromMeteorites>
 			<IsIndestructible>false</IsIndestructible>
 			<DamageRatio>0.2</DamageRatio>
-			<SpecularPower>5</SpecularPower>
-			<SpecularShininess>0.1</SpecularShininess>
+			<SpecularPower>0</SpecularPower>
+			<SpecularShininess>0</SpecularShininess>
 			<MinVersion>99999</MinVersion>
+
 			<ColorMetalXZnY>Textures\Concrete_cm.dds</ColorMetalXZnY>
 			<ColorMetalXZnYFar1>Textures\Concrete_cm.dds</ColorMetalXZnYFar1>
 			<ColorMetalXZnYFar2>Textures\Concrete_cm.dds</ColorMetalXZnYFar2>
 			<ColorMetalY>Textures\Concrete_cm.dds</ColorMetalY>
 			<ColorMetalYFar1>Textures\Concrete_cm.dds</ColorMetalYFar1>
 			<ColorMetalYFar2>Textures\Concrete_cm.dds</ColorMetalYFar2>
+
 			<NormalGlossXZnY>Textures\Concrete_ng.dds</NormalGlossXZnY>
 			<NormalGlossXZnYFar1>Textures\Concrete_ng.dds</NormalGlossXZnYFar1>
 			<NormalGlossXZnYFar2>Textures\Concrete_ng.dds</NormalGlossXZnYFar2>
 			<NormalGlossY>Textures\Concrete_ng.dds</NormalGlossY>
 			<NormalGlossYFar1>Textures\Concrete_ng.dds</NormalGlossYFar1>
 			<NormalGlossYFar2>Textures\Concrete_ng.dds</NormalGlossYFar2>
+
+			<!--
+			<ExtXZnY>Textures\Concrete_add.dds</ExtXZnY>
+			<ExtY>Textures\Concrete_add.dds</ExtY>
+			<ExtXZnYFar1>Textures\Concrete_add.dds</ExtXZnYFar1>
+			<ExtYFar1>Textures\Concrete_add.dds</ExtYFar1>
+			<ExtXZnYFar2>Textures\Concrete_add.dds</ExtXZnYFar2>
+			<ExtYFar2>Textures\Concrete_add.dds</ExtYFar2>
+			-->
+
+			<InitialScale>3</InitialScale>
 			<Scale>10</Scale>
 			<ScaleFar1>50</ScaleFar1>
 			<ScaleFar2>100</ScaleFar2>
+
+			<Far3Distance>7000</Far3Distance>
+			<Far3Color>
+				<X>0.4</X>
+				<Y>0.4</Y>
+				<Z>0.4</Z>
+				<W>1.0</W>
+			</Far3Color>
 		</VoxelMaterial>
 	</VoxelMaterials>
 </Definitions>

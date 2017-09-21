@@ -10,7 +10,7 @@ using VRage.ObjectBuilders;
 namespace Digi.Concrete
 {
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_AutomaticRifle),
-        useEntityUpdate: true,
+        useEntityUpdate: false,
         entityBuilderSubTypeNames: Concrete.CONCRETE_TOOL)]
     public class Tool : MyGameLogicComponent
     {
@@ -18,9 +18,9 @@ namespace Digi.Concrete
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
-            Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_FRAME;
+            NeedsUpdate = MyEntityUpdateEnum.EACH_FRAME; // needs to be each tick to wait for mod to initialize
         }
-
+        
         public override void UpdateBeforeSimulation()
         {
             try

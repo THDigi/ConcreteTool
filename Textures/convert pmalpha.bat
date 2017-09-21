@@ -1,0 +1,2 @@
+C:\Steam\steamapps\common\SpaceEngineers\Tools\TexturePacking\Tools\texconv Plane.png -f BC7_UNORM_SRGB -pmalpha -y
+C:\Steam\steamapps\common\SpaceEngineers\Tools\TexturePacking\Tools\texconv Line.png -f BC7_UNORM_SRGB -pmalpha -y

@@ -4,9 +4,29 @@
 		<TransparentMaterial>
 			<Id>
 				<TypeId>TransparentMaterialDefinition</TypeId>
+				<SubtypeId>ConcreteTool_Square</SubtypeId>
+			</Id>
+			<Texture>Textures\Particles\Square.dds</Texture>
+			<SoftParticleDistanceScale>0</SoftParticleDistanceScale>
+			<CanBeAffectedByOtherLights>false</CanBeAffectedByOtherLights>
+		</TransparentMaterial>
+		<TransparentMaterial>
+			<Id>
+				<TypeId>TransparentMaterialDefinition</TypeId>
 				<SubtypeId>ConcreteTool_FadeOutLine</SubtypeId>
 			</Id>
 			<Texture>Textures\Line.dds</Texture>
-		</TransparentMaterial>	
+			<SoftParticleDistanceScale>0</SoftParticleDistanceScale>
+			<CanBeAffectedByOtherLights>false</CanBeAffectedByOtherLights>
+		</TransparentMaterial>
+		<TransparentMaterial>
+			<Id>
+				<TypeId>TransparentMaterialDefinition</TypeId>
+				<SubtypeId>ConcreteTool_FadeOutPlane</SubtypeId>
+			</Id>
+			<Texture>Textures\Plane.dds</Texture>
+			<SoftParticleDistanceScale>0</SoftParticleDistanceScale>
+			<CanBeAffectedByOtherLights>false</CanBeAffectedByOtherLights>
+		</TransparentMaterial>
 	</TransparentMaterials>
 </Definitions>
