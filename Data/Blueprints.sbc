@@ -22,7 +22,7 @@
 				<SubtypeId>Blueprint_ConcreteMix</SubtypeId>
 			</Id>
 			<DisplayName>Concrete Mix</DisplayName>
-			<Icon>Textures\GUI\Icons\ingot\gravel_ingot.dds</Icon>
+			<Icon>Textures\Icons\Ammo.dds</Icon>
 			<Prerequisites>
 				<Item Amount="10" TypeId="Ingot" SubtypeId="Stone" />
 			</Prerequisites>

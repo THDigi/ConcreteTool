@@ -93,8 +93,8 @@ namespace Digi.Concrete
         private static readonly MyStringId MATERIAL_FADEOUTLINE = MyStringId.GetOrCompute("ConcreteTool_FadeOutLine");
         private static readonly MyStringId MATERIAL_FADEOUTPLANE = MyStringId.GetOrCompute("ConcreteTool_FadeOutPlane");
 
-        public const float CONCRETE_PLACE_USE_PERMETER = 1f;
-        public const float CONCRETE_PAINT_USE_PERMETER = 0.5f;
+        public const float CONCRETE_PLACE_USE = 1f;
+        public const float CONCRETE_PAINT_USE = 0.5f;
 
         public void Init()
         {
@@ -246,7 +246,7 @@ namespace Digi.Concrete
                     var inv = character.GetInventory(0);
                     var use = GetAmmoUsage(type, scale);
 
-                    if(inv.GetItemAmount(CONCRETE_MAG_DEFID) > use)
+                    if(inv.GetItemAmount(CONCRETE_MAG_DEFID) >= use)
                     {
                         if(place)
                             MyAPIGateway.Session.VoxelMaps.FillInShape(voxels, shape, materialIndex);
@@ -358,21 +358,15 @@ namespace Digi.Concrete
 
                 var character = MyAPIGateway.Session.ControlledObject as IMyCharacter;
 
-                if(character == null)
-                    return;
-
-                HoldingTool(character);
+                if(character != null)
+                {
+                    HoldingTool(character);
+                }
             }
             catch(Exception e)
             {
                 Log.Error(e);
             }
-        }
-
-        public static void PlaySound(string name)
-        {
-            var emitter = new MyEntity3DSoundEmitter((MyEntity)MyAPIGateway.Session.ControlledObject.Entity);
-            emitter.PlaySingleSound(new MySoundPair(name));
         }
 
         public void DrawTool(IMyAutomaticRifleGun gun)
@@ -383,7 +377,7 @@ namespace Digi.Concrete
                 SetToolStatus($"Press {InputHandler.GetAssignedGameControlNames(MyControlsSpace.SECONDARY_TOOL_ACTION)} to see Concrete Tools' advanced controls.", 1500, MyFontEnum.White);
         }
 
-        public void HolsterTool()
+        private void HolsterTool()
         {
             holdingTool = null;
             selectedVoxelMap = null;
@@ -501,7 +495,7 @@ namespace Digi.Concrete
             snapStatus.AliveTime = aliveTime;
             snapStatus.Show();
         }
-
+        
         private bool ToolProcess(IMyVoxelBase voxels, Vector3D target, MatrixD view, bool primaryAction, bool paintAction)
         {
             placeMatrix.Translation = target;
@@ -632,20 +626,8 @@ namespace Digi.Concrete
                             snapLock = true;
                             snapVec = Vector3D.PositiveInfinity;
 
-                            if(ctrl)
-                            {
-                                if(snapAxis < 3)
-                                    snapAxis = 4;
-                                else if(++snapAxis > 6)
-                                    snapAxis = 0;
-                            }
-                            else
-                            {
-                                if(snapAxis > 3)
-                                    snapAxis = 1;
-                                else if(++snapAxis > 3)
-                                    snapAxis = 0;
-                            }
+                            if(++snapAxis > 6)
+                                snapAxis = 0;
 
                             switch(snapAxis)
                             {
@@ -1226,10 +1208,10 @@ namespace Digi.Concrete
         private static MyFixedPoint GetAmmoUsage(PacketType type, float scale)
         {
             if(type == PacketType.PLACE_VOXEL)
-                return (MyFixedPoint)(CONCRETE_PLACE_USE_PERMETER * scale);
+                return (MyFixedPoint)(CONCRETE_PLACE_USE * scale);
 
             if(type == PacketType.PAINT_VOXEL)
-                return (MyFixedPoint)(CONCRETE_PLACE_USE_PERMETER * scale / 2);
+                return (MyFixedPoint)(CONCRETE_PAINT_USE * scale);
 
             return 0;
         }
@@ -1269,6 +1251,12 @@ namespace Digi.Concrete
             return result;
         }
 
+        public static void PlaySound(string name)
+        {
+            var emitter = new MyEntity3DSoundEmitter((MyEntity)MyAPIGateway.Session.ControlledObject.Entity);
+            emitter.PlaySingleSound(new MySoundPair(name));
+        }
+
         public void MessageEntered(string msg, ref bool send)
         {
             if(msg.StartsWith("/concrete", StringComparison.InvariantCultureIgnoreCase))
@@ -1293,6 +1281,7 @@ namespace Digi.Concrete
             seenHelp = true;
 
             var inputFire = InputHandler.GetAssignedGameControlNames(MyControlsSpace.PRIMARY_TOOL_ACTION);
+            var inputPaint = InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_COLOR_CHANGE);
             var inputHelp = InputHandler.GetAssignedGameControlNames(MyControlsSpace.SECONDARY_TOOL_ACTION);
             var inputAlign = InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT);
             var inputSnap = InputHandler.GetAssignedGameControlNames(MyControlsSpace.FREE_ROTATION, true);
@@ -1316,6 +1305,8 @@ namespace Digi.Concrete
             str.AppendLine("Controls:");
             str.AppendLine();
             str.Append(inputFire).Append(" = place concrete.").AppendLine();
+            str.AppendLine();
+            str.Append(inputPaint).Append(" = replace terrain with concrete.").AppendLine();
             str.AppendLine();
             str.Append("Ctrl+").Append(inputFire).Append(" (hold) = remove terrain.").AppendLine();
             str.AppendLine();

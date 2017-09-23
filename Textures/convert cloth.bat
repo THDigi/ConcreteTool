@@ -1,0 +1,1 @@
+C:\Steam\steamapps\common\SpaceEngineers\Tools\TexturePacking\Tools\texconv ClothBag_cm.png -f BC7_UNORM_SRGB -y

@@ -229,3 +229,17 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# Blender
+*.fbx
+*.hkt
+*.log
+*.xml
+*.blend1
+*.blend2
+*.blend3
+*.blend4
+*.blend5
+
+Ignored/
+*.txt

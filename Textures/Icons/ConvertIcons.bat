@@ -4,7 +4,7 @@ cls
 
 FOR %%f IN (*.png) DO (
   echo %%~nf
-  %TEXCONV% -ft dds %%~nf.png -pmalpha
+  %TEXCONV% -ft dds %%~nf.png -pmalpha -y
 )
 
 pause
