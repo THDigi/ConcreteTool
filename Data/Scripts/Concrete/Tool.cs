@@ -65,6 +65,7 @@ namespace Digi.Concrete
                     }
                 }
 
+                #region Dangling subpart
                 if(subpart == null)
                     return;
 
@@ -77,12 +78,23 @@ namespace Digi.Concrete
                 var pos = character.PositionComp.WorldAABB.Center;
 
                 if(Vector3D.DistanceSquared(pos, MyAPIGateway.Session.Camera.WorldMatrix.Translation) > VIEW_RANGE_SQ)
+                {
+                    if(subpart.Render.Visible)
+                        subpart.Render.Visible = false;
+
                     return;
+                }
+
+                if(!subpart.Render.Visible)
+                    subpart.Render.Visible = true;
 
                 var angAccel = Vector3.Zero;
 
+                // character.Physics.AngularAcceleration is always 0 when flying.
                 if(character.CurrentMovementState == MyCharacterMovementEnum.Flying)
                 {
+                    // TODO fix: glitchy behaviour when rotating between some specific angles
+
                     var rotation = QuaternionD.CreateFromRotationMatrix(character.PositionComp.WorldMatrix);
                     var deltaRotation = rotation * QuaternionD.Inverse(prevRotation);
                     var angVel = Vector3.Zero;
@@ -145,6 +157,7 @@ namespace Digi.Concrete
                 var rm = Matrix.CreateFromAxisAngle(m.Up, MathHelper.ToRadians(currentAngle));
                 rm.Translation = m.Translation;
                 subpart.PositionComp.LocalMatrix = rm;
+                #endregion Dangling subpart
             }
             catch(Exception e)
             {
