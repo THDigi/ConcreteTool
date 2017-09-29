@@ -1232,11 +1232,11 @@ namespace Digi.Concrete
         }
 
         /// <summary>
-        /// Because MathHelper.ToDegrees() no longer has a double value
+        /// Because MathHelper.ToDegrees() no longer has a double value, was moved to MathHelperD and I really don't wanna deal with that compatibility issue.
         /// </summary>
-        private static double RadiansToDegrees(double value)
+        private static double RadiansToDegrees(double radians)
         {
-            return value / 180d * Math.PI;
+            return radians * 180d / Math.PI;
         }
 
         private Vector3I RotateInput(bool newPressed)
