@@ -495,7 +495,7 @@ namespace Digi.Concrete
             snapStatus.AliveTime = aliveTime;
             snapStatus.Show();
         }
-        
+
         private bool ToolProcess(IMyVoxelBase voxels, Vector3D target, MatrixD view, bool primaryAction, bool paintAction)
         {
             placeMatrix.Translation = target;
@@ -731,7 +731,7 @@ namespace Digi.Concrete
                     Vector3D angles;
                     MatrixD.GetEulerAnglesXYZ(ref placeMatrix, out angles);
 
-                    SetAlignStatus($"Align: Custom - {Math.Round(MathHelper.ToDegrees(angles.X))}° / {Math.Round(MathHelper.ToDegrees(angles.Y))}° / {Math.Round(MathHelper.ToDegrees(angles.Z))}°", 500, FONTCOLOR_INFO);
+                    SetAlignStatus($"Align: Custom - {Math.Round(RadiansToDegrees(angles.X))}° / {Math.Round(RadiansToDegrees(angles.Y))}° / {Math.Round(RadiansToDegrees(angles.Z))}°", 500, FONTCOLOR_INFO);
                 }
                 #endregion Input: custom alignment
 
@@ -1229,6 +1229,14 @@ namespace Digi.Concrete
         {
             var dir = (origin - MyTransparentGeometry.Camera.Translation);
             return Vector3D.Dot(normal, dir) < 0;
+        }
+
+        /// <summary>
+        /// Because MathHelper.ToDegrees() no longer has a double value
+        /// </summary>
+        private static double RadiansToDegrees(double value)
+        {
+            return value / 180d * Math.PI;
         }
 
         private Vector3I RotateInput(bool newPressed)
