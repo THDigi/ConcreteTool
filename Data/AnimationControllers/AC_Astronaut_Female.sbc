@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Definition xsi:type="AnimationControllerDefinition">
-    <Id Type="MyObjectBuilder_AnimationControllerDefinition" Subtype="Default_Astronaut" />
+    <Id Type="MyObjectBuilder_AnimationControllerDefinition" Subtype="Default_Astronaut_Female" />
     <Layers>
       <Layer>
         <Name>ConcreteTool_WeaponPin</Name>
