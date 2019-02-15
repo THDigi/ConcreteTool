@@ -23,6 +23,19 @@
         <SubtypeId>PhysicalConcreteTool</SubtypeId>
       </Id>
       <DisplayName>Concrete Tool</DisplayName>
+      <Description>Places concrete onto asteroids and planets.
+
+{0} add concrete
+{1} replace with concrete
+[Ctrl+]{2} remove terrain
+[Shift+Scroll] adjust box size
+[Ctrl+Scroll] adjust box distance
+{3} or {4} cycles alignment mode
+{5} cycles snap mode
+[Shift+]{5} lock mode
+{6} cycle overlapping voxels
+[BlockRotation] rotate box</Description>
+      <DescriptionArgs>PRIMARY_TOOL_ACTION,CUBE_COLOR_CHANGE,SECONDARY_TOOL_ACTION,CUBE_BUILDER_CUBESIZE_MODE,CUBE_DEFAULT_MOUNTPOINT,FREE_ROTATION,USE</DescriptionArgs>
       <Icon>Textures\Icons\Tool.dds</Icon>
       <Size>
         <X>0.45</X>
