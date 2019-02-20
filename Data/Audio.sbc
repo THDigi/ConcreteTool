@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<Definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Sounds>
+    <Sound>
+      <Id>
+        <TypeId>MyObjectBuilder_AudioDefinition</TypeId>
+        <SubtypeId>ConcreteTool_PlaceConcrete</SubtypeId>
+      </Id>
+      <Category>SHOT</Category>
+      <MaxDistance>35</MaxDistance>
+      <Volume>1</Volume>
+      <VolumeVariation>0.2</VolumeVariation>
+      <PitchVariation>50</PitchVariation>
+      <Loopable>false</Loopable>
+      <Waves>
+        <Wave Type="D3">
+          <Start>Audio/PlaceConcrete3d01.wav</Start>
+        </Wave>
+        <Wave Type="D3">
+          <Start>Audio/PlaceConcrete3d02.wav</Start>
+        </Wave>
+        <Wave Type="D3">
+          <Start>Audio/PlaceConcrete3d03.wav</Start>
+        </Wave>
+        <Wave Type="D3">
+          <Start>Audio/PlaceConcrete3d04.wav</Start>
+        </Wave>
+        <Wave Type="D3">
+          <Start>Audio/PlaceConcrete3d05.wav</Start>
+        </Wave>
+      </Waves>
+    </Sound>
+    <Sound>
+      <Id>
+        <TypeId>MyObjectBuilder_AudioDefinition</TypeId>
+        <SubtypeId>ConcreteTool_RemoveTerrain</SubtypeId>
+      </Id>
+      <Category>SHOT</Category>
+      <MaxDistance>35</MaxDistance>
+      <Volume>0.5</Volume>
+      <VolumeVariation>0.1</VolumeVariation>
+      <PitchVariation>50</PitchVariation>
+      <Loopable>false</Loopable>
+      <Waves>
+        <Wave Type="D3">
+          <Start>Audio/RemoveTerrain3d01.wav</Start>
+        </Wave>
+      </Waves>
+    </Sound>
+  </Sounds>
+</Definitions>

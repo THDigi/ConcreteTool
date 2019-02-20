@@ -1135,10 +1135,12 @@ namespace Digi.Concrete
             }
             #endregion Ammo check
 
+            float soundVolume = MathHelper.Clamp(((placeScale / 3f) * 0.9f), 0.3f, 0.9f);
+
             if(paintAction)
             {
                 VoxelAction(PacketType.PAINT_VOXEL, voxels, placeShape, placeScale, material.Index, Session.Player.Character);
-                PlaySound("HudColorBlock");
+                PlaySound("ConcreteTool_PlaceConcrete", soundVolume);
                 cooldown = cooldownTicks;
                 return true;
             }
@@ -1156,7 +1158,7 @@ namespace Digi.Concrete
                         holdPress = 0;
                         cooldown = cooldownTicks;
                         VoxelAction(PacketType.REMOVE_VOXEL, voxels, placeShape, placeScale);
-                        PlaySound("HudDeleteBlock");
+                        PlaySound("ConcreteTool_RemoveTerrain", soundVolume);
                     }
                 }
                 else
@@ -1193,7 +1195,7 @@ namespace Digi.Concrete
 
                     cooldown = cooldownTicks;
                     VoxelAction(PacketType.PLACE_VOXEL, voxels, placeShape, placeScale, material.Index, Session.Player.Character);
-                    PlaySound("HudPlaceBlock");
+                    PlaySound("ConcreteTool_PlaceConcrete", soundVolume);
                     return true;
                 }
             }
@@ -1259,9 +1261,10 @@ namespace Digi.Concrete
             return result;
         }
 
-        public static void PlaySound(string name)
+        public static void PlaySound(string name, float volume = 0.3f)
         {
             var emitter = new MyEntity3DSoundEmitter((MyEntity)MyAPIGateway.Session.ControlledObject.Entity);
+            emitter.CustomVolume = volume;
             emitter.PlaySingleSound(new MySoundPair(name));
         }
 
