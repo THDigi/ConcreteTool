@@ -15,8 +15,8 @@ using VRage.Input;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
-
 using static Sandbox.ModAPI.MyAPIGateway;
+using BlendTypeEnum = VRageRender.MyBillboard.BlendTypeEnum; // HACK allows the use of BlendTypeEnum which is whitelisted but bypasses accessing MyBillboard which is not whitelisted
 
 namespace Digi.Concrete
 {
@@ -92,6 +92,8 @@ namespace Digi.Concrete
         private static readonly MyStringId MATERIAL_SQUARE = MyStringId.GetOrCompute("ConcreteTool_Square");
         private static readonly MyStringId MATERIAL_FADEOUTLINE = MyStringId.GetOrCompute("ConcreteTool_FadeOutLine");
         private static readonly MyStringId MATERIAL_FADEOUTPLANE = MyStringId.GetOrCompute("ConcreteTool_FadeOutPlane");
+
+        private const BlendTypeEnum BLEND_TYPE = BlendTypeEnum.SDR;
 
         public const float CONCRETE_PLACE_USE = 1f;
         public const float CONCRETE_PAINT_USE = 0.5f;
@@ -329,7 +331,7 @@ namespace Digi.Concrete
                         {
                             var matrix = ent.WorldMatrix;
                             var box = (BoundingBoxD)ent.PositionComp.LocalAABB;
-                            MySimpleObjectDraw.DrawTransparentBox(ref matrix, ref box, ref color, MySimpleObjectRasterizer.Wireframe, 1, 0.01f, MATERIAL_SQUARE, MATERIAL_SQUARE, false);
+                            MySimpleObjectDraw.DrawTransparentBox(ref matrix, ref box, ref color, MySimpleObjectRasterizer.Wireframe, 1, 0.01f, MATERIAL_SQUARE, MATERIAL_SQUARE, false, blendType: BLEND_TYPE);
                         }
                     }
                 }
@@ -346,7 +348,7 @@ namespace Digi.Concrete
                         var matrix = selectedVoxelMap.WorldMatrix;
                         var box = (BoundingBoxD)selectedVoxelMap.LocalAABB;
                         var color = Color.Green * MathHelper.Lerp(0f, 0.5f, ((float)selectedVoxelMapTicks / (float)HIGHLIGHT_VOXELMAP_MAXTICKS));
-                        MySimpleObjectDraw.DrawTransparentBox(ref matrix, ref box, ref color, MySimpleObjectRasterizer.Wireframe, 1, 0.01f, MATERIAL_SQUARE, MATERIAL_SQUARE, false);
+                        MySimpleObjectDraw.DrawTransparentBox(ref matrix, ref box, ref color, MySimpleObjectRasterizer.Wireframe, 1, 0.01f, MATERIAL_SQUARE, MATERIAL_SQUARE, false, blendType: BLEND_TYPE);
                     }
                 }
 
@@ -852,22 +854,22 @@ namespace Digi.Concrete
                 switch(snapAxis)
                 {
                     case 1: // X
-                        MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, color, placeMatrix.Translation + placeMatrix.Left * lineLengthHalf, placeMatrix.Right, lineLength, LINE_WIDTH);
+                        MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, color, placeMatrix.Translation + placeMatrix.Left * lineLengthHalf, placeMatrix.Right, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
                         break;
                     case 2: // Y
-                        MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, color, placeMatrix.Translation + placeMatrix.Up * lineLengthHalf, placeMatrix.Down, lineLength, LINE_WIDTH);
+                        MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, color, placeMatrix.Translation + placeMatrix.Up * lineLengthHalf, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
                         break;
                     case 3: // Z
-                        MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, color, placeMatrix.Translation + placeMatrix.Forward * lineLengthHalf, placeMatrix.Backward, lineLength, LINE_WIDTH);
+                        MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, color, placeMatrix.Translation + placeMatrix.Forward * lineLengthHalf, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
                         break;
                     case 4: // X/Y
-                        MyTransparentGeometry.AddBillboardOriented(MATERIAL_FADEOUTPLANE, color, placeMatrix.Translation, placeMatrix.Left, placeMatrix.Up, planeSize);
+                        MyTransparentGeometry.AddBillboardOriented(MATERIAL_FADEOUTPLANE, color, placeMatrix.Translation, placeMatrix.Left, placeMatrix.Up, planeSize, blendType: BLEND_TYPE);
                         break;
                     case 5: // Y/Z
-                        MyTransparentGeometry.AddBillboardOriented(MATERIAL_FADEOUTPLANE, color, placeMatrix.Translation, placeMatrix.Up, placeMatrix.Forward, planeSize);
+                        MyTransparentGeometry.AddBillboardOriented(MATERIAL_FADEOUTPLANE, color, placeMatrix.Translation, placeMatrix.Up, placeMatrix.Forward, planeSize, blendType: BLEND_TYPE);
                         break;
                     case 6: // Z/X
-                        MyTransparentGeometry.AddBillboardOriented(MATERIAL_FADEOUTPLANE, color, placeMatrix.Translation, placeMatrix.Forward, placeMatrix.Left, planeSize);
+                        MyTransparentGeometry.AddBillboardOriented(MATERIAL_FADEOUTPLANE, color, placeMatrix.Translation, placeMatrix.Forward, placeMatrix.Left, planeSize, blendType: BLEND_TYPE);
                         break;
                 }
             }
@@ -883,20 +885,20 @@ namespace Digi.Concrete
                 var rightHalf = (Vector3D.Right / 2);
                 var forwardHalf = (Vector3D.Forward / 2);
 
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + upHalf + -rightHalf + Vector3D.Forward * LINE_LENGTH_HALF, Vector3.Backward, LINE_LENGTH, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + upHalf + rightHalf + Vector3D.Forward * LINE_LENGTH_HALF, Vector3.Backward, LINE_LENGTH, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -upHalf + -rightHalf + Vector3D.Forward * LINE_LENGTH_HALF, Vector3.Backward, LINE_LENGTH, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -upHalf + rightHalf + Vector3D.Forward * LINE_LENGTH_HALF, Vector3.Backward, LINE_LENGTH, LINE_WIDTH);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + upHalf + -rightHalf + Vector3D.Forward * LINE_LENGTH_HALF, Vector3.Backward, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + upHalf + rightHalf + Vector3D.Forward * LINE_LENGTH_HALF, Vector3.Backward, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -upHalf + -rightHalf + Vector3D.Forward * LINE_LENGTH_HALF, Vector3.Backward, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -upHalf + rightHalf + Vector3D.Forward * LINE_LENGTH_HALF, Vector3.Backward, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
 
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + forwardHalf + -rightHalf + Vector3D.Up * LINE_LENGTH_HALF, Vector3.Down, LINE_LENGTH, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + forwardHalf + rightHalf + Vector3D.Up * LINE_LENGTH_HALF, Vector3.Down, LINE_LENGTH, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -forwardHalf + -rightHalf + Vector3D.Up * LINE_LENGTH_HALF, Vector3.Down, LINE_LENGTH, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -forwardHalf + rightHalf + Vector3D.Up * LINE_LENGTH_HALF, Vector3.Down, LINE_LENGTH, LINE_WIDTH);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + forwardHalf + -rightHalf + Vector3D.Up * LINE_LENGTH_HALF, Vector3.Down, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + forwardHalf + rightHalf + Vector3D.Up * LINE_LENGTH_HALF, Vector3.Down, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -forwardHalf + -rightHalf + Vector3D.Up * LINE_LENGTH_HALF, Vector3.Down, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -forwardHalf + rightHalf + Vector3D.Up * LINE_LENGTH_HALF, Vector3.Down, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
 
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + forwardHalf + -upHalf + Vector3D.Right * LINE_LENGTH_HALF, Vector3.Left, LINE_LENGTH, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + forwardHalf + upHalf + Vector3D.Right * LINE_LENGTH_HALF, Vector3.Left, LINE_LENGTH, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -forwardHalf + -upHalf + Vector3D.Right * LINE_LENGTH_HALF, Vector3.Left, LINE_LENGTH, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -forwardHalf + upHalf + Vector3D.Right * LINE_LENGTH_HALF, Vector3.Left, LINE_LENGTH, LINE_WIDTH);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + forwardHalf + -upHalf + Vector3D.Right * LINE_LENGTH_HALF, Vector3.Left, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + forwardHalf + upHalf + Vector3D.Right * LINE_LENGTH_HALF, Vector3.Left, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -forwardHalf + -upHalf + Vector3D.Right * LINE_LENGTH_HALF, Vector3.Left, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -forwardHalf + upHalf + Vector3D.Right * LINE_LENGTH_HALF, Vector3.Left, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
             }
             else if(snap == 2) // snap to distance increments from center
             {
@@ -937,7 +939,7 @@ namespace Digi.Concrete
                 const float HEIGHT_HALF = HEIGHT / 2;
                 const float HEIGHT_LINES = 2.5f;
 
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + (dir * HEIGHT_HALF), -dir, HEIGHT, LINE_WIDTH);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + (dir * HEIGHT_HALF), -dir, HEIGHT, LINE_WIDTH, blendType: BLEND_TYPE);
 
                 var vertical = Vector3D.Cross(dir, view.Forward);
 
@@ -947,7 +949,7 @@ namespace Digi.Concrete
                 {
                     var color = (invalidPlacement ? Color.Red : Color.Wheat) * (1f - Math.Abs(alpha));
 
-                    MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, color, placeMatrix.Translation - (dir * h) + vertical * LINE_LENGTH_HALF, -vertical, LINE_LENGTH, LINE_WIDTH);
+                    MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, color, placeMatrix.Translation - (dir * h) + vertical * LINE_LENGTH_HALF, -vertical, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
 
                     alpha += 0.2f;
                 }
@@ -1007,14 +1009,14 @@ namespace Digi.Concrete
                 if(IsFaceVisible(p, placeMatrix.Forward))
                 {
                     MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref placeMatrix);
-                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p);
+                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
                 }
 
                 p = placeMatrix.Translation + placeMatrix.Backward * halfScale;
                 if(IsFaceVisible(p, placeMatrix.Backward))
                 {
                     MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref placeMatrix);
-                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p);
+                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
                 }
 
                 p = placeMatrix.Translation + placeMatrix.Left * halfScale;
@@ -1022,14 +1024,14 @@ namespace Digi.Concrete
                 if(IsFaceVisible(p, placeMatrix.Left))
                 {
                     MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref m);
-                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p);
+                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
                 }
 
                 p = placeMatrix.Translation + placeMatrix.Right * halfScale;
                 if(IsFaceVisible(p, placeMatrix.Right))
                 {
                     MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref m);
-                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p);
+                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
                 }
 
                 m = placeMatrix * MatrixD.CreateFromAxisAngle(placeMatrix.Left, rad);
@@ -1037,34 +1039,34 @@ namespace Digi.Concrete
                 if(IsFaceVisible(p, placeMatrix.Up))
                 {
                     MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref m);
-                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p);
+                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
                 }
 
                 p = placeMatrix.Translation + placeMatrix.Down * halfScale;
                 if(IsFaceVisible(p, placeMatrix.Down))
                 {
                     MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref m);
-                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p);
+                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
                 }
 
                 var upHalf = (placeMatrix.Up * halfScale);
                 var rightHalf = (placeMatrix.Right * halfScale);
                 var forwardHalf = (placeMatrix.Forward * halfScale);
 
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + upHalf + -rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + upHalf + rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -upHalf + -rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -upHalf + rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH);
+                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + upHalf + -rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + upHalf + rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -upHalf + -rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -upHalf + rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
 
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + -rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + -rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH);
+                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + -rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + -rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
 
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + -upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + -upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH);
+                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + -upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + -upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
             }
 
             // TODO more shapes? (set shape)
@@ -1082,8 +1084,8 @@ namespace Digi.Concrete
             //            shape.Radius = placeScale;
             //            placeShape = shape;
             //
-            //            MySimpleObjectDraw.DrawTransparentSphere(ref placeMatrix, shape.Radius, ref colorWire, MySimpleObjectRasterizer.Wireframe, 12, MATERIAL_SQUARE, MATERIAL_SQUARE, 0.01f);
-            //            MySimpleObjectDraw.DrawTransparentSphere(ref placeMatrix, shape.Radius, ref colorFace, MySimpleObjectRasterizer.Solid, 12, MATERIAL_SQUARE, MATERIAL_SQUARE, 0.01f);
+            //            MySimpleObjectDraw.DrawTransparentSphere(ref placeMatrix, shape.Radius, ref colorWire, MySimpleObjectRasterizer.Wireframe, 12, MATERIAL_SQUARE, MATERIAL_SQUARE, 0.01f, blendType: BLEND_TYPE);
+            //            MySimpleObjectDraw.DrawTransparentSphere(ref placeMatrix, shape.Radius, ref colorFace, MySimpleObjectRasterizer.Solid, 12, MATERIAL_SQUARE, MATERIAL_SQUARE, 0.01f, blendType: BLEND_TYPE);
             //            break;
             //        }
             //    case PlaceShape.CAPSULE:
@@ -1093,7 +1095,7 @@ namespace Digi.Concrete
             //            // height
             //            placeShape = shape;
             //
-            //            MySimpleObjectDraw.DrawTransparentCapsule(ref placeMatrix, shape.Radius, 2, ref colorWire, 12, MATERIAL_SQUARE);
+            //            MySimpleObjectDraw.DrawTransparentCapsule(ref placeMatrix, shape.Radius, 2, ref colorWire, 12, MATERIAL_SQUARE, blendType: BLEND_TYPE);
             //            break;
             //        }
             //    case PlaceShape.RAMP:
@@ -1106,7 +1108,7 @@ namespace Digi.Concrete
             //            shape.Boundaries = box;
             //            placeShape = shape;
             //
-            //            MySimpleObjectDraw.DrawTransparentRamp(ref placeMatrix, ref box, ref colorWire, MATERIAL_SQUARE);
+            //            MySimpleObjectDraw.DrawTransparentRamp(ref placeMatrix, ref box, ref colorWire, MATERIAL_SQUARE, blendType: BLEND_TYPE);
             //            break;
             //        }
             //}
