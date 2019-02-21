@@ -95,6 +95,9 @@ namespace Digi.ConcreteTool.MP
                 if(p.SteamUserId == SenderId) // don't sends sounds back to sender
                     continue;
 
+                if(p.Character == null || Vector3D.DistanceSquared(p.Character.GetPosition(), Origin) > ConcreteToolMod.TOOL_ACTION_MAX_DIST_SQ)
+                    continue;
+
                 MyAPIGateway.Multiplayer.SendMessageTo(network.PacketId, packetBytes, p.SteamUserId);
             }
 

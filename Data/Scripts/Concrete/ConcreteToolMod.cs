@@ -78,6 +78,8 @@ namespace Digi.ConcreteTool
         private const float MIN_DISTANCE = 2f;
         private const float MAX_DISTANCE = 6f;
 
+        public const float TOOL_ACTION_MAX_DIST_SQ = 200 * 200; // distance at which player must be from origin to get the sound+particle packet
+
         public const string CONCRETE_MATERIAL = "Concrete";
         public const string CONCRETE_TOOL = "ConcreteTool";
         public const string CONCRETE_WEAPON_ID = "WeaponConcreteTool";
