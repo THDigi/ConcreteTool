@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using Digi.ConcreteTool.MP;
 using Sandbox.Definitions;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
+using Sandbox.Game.Entities.Character.Components;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Weapons;
-using VRage;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
@@ -15,25 +15,25 @@ using VRage.Input;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
-using static Sandbox.ModAPI.MyAPIGateway;
 using BlendTypeEnum = VRageRender.MyBillboard.BlendTypeEnum; // HACK allows the use of BlendTypeEnum which is whitelisted but bypasses accessing MyBillboard which is not whitelisted
 
-namespace Digi.Concrete
+namespace Digi.ConcreteTool
 {
-    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
-    public class Concrete : MySessionComponentBase
-    {
-        public override void LoadData()
-        {
-            Log.SetUp("Concrete Tool", 396679430, "ConcreteTool");
-        }
+    public enum VoxelActionEnum { ADD_VOXEL, PAINT_VOXEL, REMOVE_VOXEL }
 
-        public static Concrete instance = null;
+    [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
+    public class ConcreteToolMod : MySessionComponentBase
+    {
+        public static ConcreteToolMod Instance = null;
 
         private bool init = false;
         private bool isThisDedicated = false;
 
+        public readonly Networking Network = new Networking(63311);
+        public readonly ChatCommands ChatCommands = new ChatCommands();
+
         public IMyAutomaticRifleGun holdingTool = null;
+        public bool SeenHelp = false;
 
         private IMyHudNotification toolStatus = null;
         private IMyHudNotification alignStatus = null;
@@ -59,16 +59,13 @@ namespace Digi.Concrete
         private int holdPress = 0;
         private int cooldown = 0;
         private bool soundPlayed_Unable = false;
-        private bool seenHelp = false;
+        private Vector3D target; // for use in delegate to avoid allocations
 
         private MyVoxelMaterialDefinition material = null;
         private readonly List<MyEntity> highlightEnts = new List<MyEntity>();
         private readonly List<IMyVoxelBase> maps = new List<IMyVoxelBase>();
 
         //private enum PlaceShape { BOX, SPHERE, CAPSULE, RAMP, }
-        private enum PacketType { PLACE_VOXEL, PAINT_VOXEL, REMOVE_VOXEL }
-
-        public const ushort PACKET = 63311;
 
         private const int HIGHLIGHT_VOXELMAP_MAXTICKS = 120;
         private const int HIGHLIGHT_ENTS_MAXTICKS = 60;
@@ -97,58 +94,44 @@ namespace Digi.Concrete
 
         public const float CONCRETE_PLACE_USE = 1f;
         public const float CONCRETE_PAINT_USE = 0.5f;
+        private const int REMOVE_TARGET_TICKS = 20;
+        private const int RECENT_ACTION_TICKS = 10;
 
-        public void Init()
+        public override void LoadData()
         {
-            instance = this;
-            Log.Init();
+            Instance = this;
+            Log.ModName = "Concrete Tool";
+            Log.AutoClose = false;
+        }
 
-            init = true;
-            isThisDedicated = (Utilities.IsDedicated && MyAPIGateway.Multiplayer.IsServer);
-
-            Utilities.MessageEntered += MessageEntered;
-
-            if(MyAPIGateway.Multiplayer.IsServer)
-            {
-                MyAPIGateway.Multiplayer.RegisterMessageHandler(PACKET, ReceivedPacket);
-            }
+        public override void BeforeStart()
+        {
+            isThisDedicated = (MyAPIGateway.Utilities.IsDedicated && MyAPIGateway.Multiplayer.IsServer);
 
             if(material == null && !MyDefinitionManager.Static.TryGetVoxelMaterialDefinition(CONCRETE_MATERIAL, out material))
             {
-                throw new Exception("ERROR: Could not get the '" + CONCRETE_MATERIAL + "' voxel material!");
+                throw new Exception($"ERROR: Could not get the '{CONCRETE_MATERIAL}' voxel material!");
             }
 
-            // make the concrete tool not be able to shoot normally, to avoid needing to add ammo and the stupid hardcoded screen shake
-            var gunDef = MyDefinitionManager.Static.GetWeaponDefinition(new MyDefinitionId(typeof(MyObjectBuilder_WeaponDefinition), CONCRETE_WEAPON_ID));
+            Network.Register();
+            ChatCommands.Register();
 
-            for(int i = 0; i < gunDef.WeaponAmmoDatas.Length; i++)
-            {
-                var ammoData = gunDef.WeaponAmmoDatas[i];
+            Utils.PreventConcreteToolVanillaFiring();
 
-                if(ammoData == null)
-                    continue;
-
-                ammoData.ShootIntervalInMiliseconds = int.MaxValue;
-            }
+            SetUpdateOrder(MyUpdateOrder.AfterSimulation);
+            init = true;
         }
 
         protected override void UnloadData()
         {
-            instance = null;
-            material = null;
-
             try
             {
                 if(init)
                 {
                     init = false;
 
-                    Utilities.MessageEntered -= MessageEntered;
-
-                    if(MyAPIGateway.Multiplayer.IsServer)
-                    {
-                        MyAPIGateway.Multiplayer.UnregisterMessageHandler(PACKET, ReceivedPacket);
-                    }
+                    ChatCommands.Unregister();
+                    Network.Unregister();
                 }
             }
             catch(Exception e)
@@ -156,164 +139,108 @@ namespace Digi.Concrete
                 Log.Error(e);
             }
 
+            Instance = null;
+            material = null;
             Log.Close();
         }
 
-        private void ReceivedPacket(byte[] bytes)
-        {
-            try
-            {
-                if(!MyAPIGateway.Session.IsServer) // ensure this only gets called server side even though it's only registered server side
-                    return;
-
-                int index = 0;
-
-                var type = (PacketType)bytes[index];
-                index += sizeof(byte);
-
-                long voxelsId = BitConverter.ToInt64(bytes, index);
-                index += sizeof(long);
-
-                var voxels = MyAPIGateway.Entities.GetEntityById(voxelsId) as IMyVoxelBase;
-
-                if(voxels == null)
-                {
-                    Log.Error($"Received packet with wrong entity; entityId={voxelsId}; expected IMyVoxelBase got ={MyAPIGateway.Entities.GetEntityById(voxelsId)} type={type}");
-                    return;
-                }
-
-                float scale = BitConverter.ToSingle(bytes, index);
-                index += sizeof(float);
-
-                Vector3D origin = new Vector3D(BitConverter.ToDouble(bytes, index),
-                                              BitConverter.ToDouble(bytes, index + sizeof(double)),
-                                              BitConverter.ToDouble(bytes, index + sizeof(double) * 2));
-                index += sizeof(double) * 3;
-
-                Quaternion q = new Quaternion(BitConverter.ToSingle(bytes, index),
-                                              BitConverter.ToSingle(bytes, index + sizeof(float)),
-                                              BitConverter.ToSingle(bytes, index + sizeof(float) * 2),
-                                              BitConverter.ToSingle(bytes, index + sizeof(float) * 3));
-                index += sizeof(float) * 4;
-
-                var shape = MyAPIGateway.Session.VoxelMaps.GetBoxVoxelHand();
-
-                var vec = (Vector3D.One / 2) * scale;
-                shape.Boundaries = new BoundingBoxD(-vec, vec);
-
-                var m = MatrixD.CreateFromQuaternion(q);
-                m.Translation = origin;
-                shape.Transform = m;
-
-                if(type == PacketType.PLACE_VOXEL || type == PacketType.PAINT_VOXEL)
-                {
-                    byte materialIndex = bytes[index];
-                    index += sizeof(byte);
-
-                    long charId = BitConverter.ToInt64(bytes, index);
-                    index += sizeof(long);
-
-                    var character = MyAPIGateway.Entities.GetEntityById(charId) as IMyCharacter;
-
-                    if(character == null)
-                    {
-                        Log.Error($"Received packet with unknown character entityId={charId}; found={MyAPIGateway.Entities.GetEntityById(charId)} type={type}");
-                        return;
-                    }
-
-                    VoxelAction(type, voxels, shape, scale, materialIndex, character);
-                }
-                else
-                {
-                    VoxelAction(type, voxels, shape, scale);
-                }
-            }
-            catch(Exception e)
-            {
-                Log.Error(e);
-            }
-        }
-
         /// <summary>
-        /// Executes voxel place/remove action (+inventory remove on voxel place) by sending a packet from clients or executing it directly if already server.
+        /// Executes voxel place/remove action (+inventory remove on voxel place) directly if server or sends a packet to execute it server-side.
         /// </summary>
-        private void VoxelAction(PacketType type, IMyVoxelBase voxels, IMyVoxelShape shape, float scale, byte materialIndex = 0, IMyCharacter character = null)
+        public void VoxelAction(VoxelActionEnum type, IMyVoxelBase voxelEnt, IMyVoxelShape shape, float scale, IMyCharacter character)
         {
-            if(MyAPIGateway.Session.IsServer)
+            if(MyAPIGateway.Multiplayer.IsServer)
             {
-                bool place = (type == PacketType.PLACE_VOXEL);
+                bool add = (type == VoxelActionEnum.ADD_VOXEL);
 
-                if(place || type == PacketType.PAINT_VOXEL)
+                if(add || type == VoxelActionEnum.PAINT_VOXEL)
                 {
                     var inv = character.GetInventory(0);
-                    var use = GetAmmoUsage(type, scale);
+                    var use = Utils.GetAmmoUsage(type, scale);
 
                     if(inv.GetItemAmount(CONCRETE_MAG_DEFID) >= use)
                     {
-                        if(place)
-                            MyAPIGateway.Session.VoxelMaps.FillInShape(voxels, shape, materialIndex);
+                        if(add)
+                            MyAPIGateway.Session.VoxelMaps.FillInShape(voxelEnt, shape, material.Index);
                         else
-                            MyAPIGateway.Session.VoxelMaps.PaintInShape(voxels, shape, materialIndex);
+                            MyAPIGateway.Session.VoxelMaps.PaintInShape(voxelEnt, shape, material.Index);
 
                         inv.RemoveItemsOfType(use, CONCRETE_MAG, false);
                     }
                     else
                         Log.Error($"Not enough ammo ({use}) for {type} on {character.DisplayName} ({character.EntityId})");
                 }
-                else if(type == PacketType.REMOVE_VOXEL)
+                else if(type == VoxelActionEnum.REMOVE_VOXEL)
                 {
-                    MyAPIGateway.Session.VoxelMaps.CutOutShape(voxels, shape);
+                    MyAPIGateway.Session.VoxelMaps.CutOutShape(voxelEnt, shape);
                 }
             }
             else
             {
-                bool extraArgs = (type == PacketType.PLACE_VOXEL || type == PacketType.PAINT_VOXEL);
-
-                if(extraArgs && character == null)
-                {
-                    Log.Error($"VoxelAction() - Character is null! PacketType={type}; voxels.EntityId={voxels.EntityId}");
-                    return;
-                }
-
-                int len = sizeof(byte) + sizeof(long) + sizeof(float) + (sizeof(double) * 3) + (sizeof(float) * 4);
-
-                if(extraArgs)
-                    len += sizeof(long) + sizeof(byte);
-
-                var bytes = new byte[len];
-                bytes[0] = (byte)type;
-                len = sizeof(byte);
-
-                PacketHandler.AddToArray(voxels.EntityId, ref len, ref bytes);
-                PacketHandler.AddToArray(scale, ref len, ref bytes);
-                PacketHandler.AddToArray(shape.Transform.Translation, ref len, ref bytes);
-                PacketHandler.AddToArray(Quaternion.CreateFromRotationMatrix(shape.Transform), ref len, ref bytes);
-
-                if(extraArgs)
-                {
-                    bytes[len] = materialIndex;
-                    len += sizeof(byte);
-
-                    PacketHandler.AddToArray(character.EntityId, ref len, ref bytes);
-                }
-
-                MyAPIGateway.Multiplayer.SendMessageToServer(PACKET, bytes, true);
+                var origin = shape.Transform.Translation;
+                var orientation = Quaternion.CreateFromRotationMatrix(shape.Transform);
+                var packet = new PacketVoxelAction(type, voxelEnt.EntityId, scale, origin, orientation, character.EntityId);
+                Network.SendToServer(packet);
             }
+        }
+
+        /// <summary>
+        /// Executes tool effects for clients to see/hear
+        /// </summary>
+        public static void ToolAction(VoxelActionEnum type, IMyCharacter character, float scale, Vector3D origin)
+        {
+            #region Recoil animation
+            var wepPos = character.Components.Get<MyCharacterWeaponPositionComponent>();
+
+            wepPos.AddBackkick(3f * (1 / 60f));
+            #endregion
+
+            #region Sound
+            const float MIN_VOLUME = 0.4f;
+            const float MAX_VOLUME = 0.8f;
+            float soundVolume = MathHelper.Clamp(((scale / 3f) * MAX_VOLUME), MIN_VOLUME, MAX_VOLUME);
+
+            switch(type)
+            {
+                case VoxelActionEnum.ADD_VOXEL:
+                case VoxelActionEnum.PAINT_VOXEL:
+                    Utils.PlaySoundAt(character, "ConcreteTool_PlaceConcrete", soundVolume);
+                    break;
+                case VoxelActionEnum.REMOVE_VOXEL:
+                    Utils.PlaySoundAt(character, "ConcreteTool_RemoveTerrain", soundVolume);
+                    break;
+            }
+            #endregion
+
+            #region Particles
+            MyParticleEffect particle;
+            string particleName = null;
+            var matrix = MatrixD.CreateTranslation(origin);
+
+            switch(type)
+            {
+                case VoxelActionEnum.ADD_VOXEL:
+                case VoxelActionEnum.PAINT_VOXEL:
+                    particleName = "ConcreteTool_PlaceConcrete";
+                    break;
+                case VoxelActionEnum.REMOVE_VOXEL:
+                    particleName = "ConcreteTool_RemoveTerrain";
+                    break;
+            }
+
+            if(particleName != null && MyParticlesManager.TryCreateParticleEffect(particleName, ref matrix, ref origin, uint.MaxValue, out particle))
+            {
+                particle.Loop = false;
+                particle.UserScale = scale / 3f;
+            }
+            #endregion
         }
 
         public override void UpdateAfterSimulation()
         {
             try
             {
-                if(!init)
-                {
-                    if(MyAPIGateway.Session == null)
-                        return;
-
-                    Init();
-                }
-
-                if(isThisDedicated)
+                if(isThisDedicated || !init)
                     return;
 
                 if(highlightEnts.Count > 0)
@@ -371,11 +298,11 @@ namespace Digi.Concrete
             }
         }
 
-        public void DrawTool(IMyAutomaticRifleGun gun)
+        public void EquipTool(IMyAutomaticRifleGun gun)
         {
             holdingTool = gun;
 
-            if(!seenHelp)
+            if(!SeenHelp)
                 SetToolStatus($"Press {InputHandler.GetAssignedGameControlNames(MyControlsSpace.SECONDARY_TOOL_ACTION)} to see Concrete Tools' advanced controls.", 1500, MyFontEnum.White);
         }
 
@@ -390,40 +317,31 @@ namespace Digi.Concrete
         {
             bool inputReadable = InputHandler.IsInputReadable();
 
-            if(inputReadable && Input.IsNewGameControlPressed(MyControlsSpace.SECONDARY_TOOL_ACTION))
+            if(inputReadable && MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.SECONDARY_TOOL_ACTION))
             {
-                ShowHelp();
+                ChatCommands.ShowHelp();
             }
 
             // detect and revert aim down sights
             // the 1st person view check is required to avoid some 3rd person loopback, it still reverts zoom initiated from 3rd person tho
-            if(character.IsInFirstPersonView && MathHelper.ToDegrees(MyAPIGateway.Session.Camera.FovWithZoom) < MyAPIGateway.Session.Camera.FieldOfViewAngle)
+            //if(character.IsInFirstPersonView && MathHelper.ToDegrees(MyAPIGateway.Session.Camera.FovWithZoom) < MyAPIGateway.Session.Camera.FieldOfViewAngle)
+            var comp = character.Components.Get<MyCharacterWeaponPositionComponent>();
+            if(comp.IsInIronSight)
             {
                 holdingTool.EndShoot(MyShootActionEnum.SecondaryAction);
                 holdingTool.Shoot(MyShootActionEnum.SecondaryAction, Vector3.Forward, null, null);
                 holdingTool.EndShoot(MyShootActionEnum.SecondaryAction);
             }
 
+            selectedVoxelMap = null;
+
             // compute target position
             var view = character.GetHeadMatrix(false, true);
-            var target = view.Translation + (view.Forward * placeDistance);
-            selectedVoxelMap = null;
-            maps.Clear();
+            target = view.Translation + (view.Forward * placeDistance);
 
             // find all voxelmaps intersecting with the target position
-            MyAPIGateway.Session.VoxelMaps.GetInstances(maps, delegate (IMyVoxelBase map)
-            {
-                if(map.StorageName == null)
-                    return false;
-
-                // ignore ghost asteroids
-                // explanation: planets don't have physics linked directly to entity and asteroids do have physics and they're disabled when in ghost placement mode, but not null.
-                if(!(map is MyPlanet) && (map.Physics == null || !map.Physics.Enabled))
-                    return false;
-
-                var localTarget = Vector3D.Transform(target, map.WorldMatrixInvScaled);
-                return map.LocalAABB.Contains(localTarget) == ContainmentType.Contains;
-            });
+            maps.Clear();
+            MyAPIGateway.Session.VoxelMaps.GetInstances(maps, FilterVoxelEntities);
 
             if(maps.Count == 1)
             {
@@ -431,20 +349,21 @@ namespace Digi.Concrete
             }
             else if(maps.Count > 1)
             {
-                if(inputReadable && Input.IsNewGameControlPressed(MyControlsSpace.USE))
+                if(inputReadable && MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.USE))
                     selectedVoxelMapIndex++;
 
                 if(selectedVoxelMapIndex >= maps.Count)
                     selectedVoxelMapIndex = 0;
 
                 selectedVoxelMap = maps[selectedVoxelMapIndex];
-                Utilities.ShowNotification("[" + InputHandler.GetAssignedGameControlNames(MyControlsSpace.USE) + "] Selected Voxel Map: " + selectedVoxelMap.StorageName + " (" + (selectedVoxelMapIndex + 1) + " of " + maps.Count + ")", 16, MyFontEnum.Blue);
+
+                MyAPIGateway.Utilities.ShowNotification($"([{InputHandler.GetAssignedGameControlNames(MyControlsSpace.USE)}]) Selected Voxel Map: {selectedVoxelMap.StorageName} ({(selectedVoxelMapIndex + 1)} of { maps.Count})", 16, MyFontEnum.Blue);
             }
 
             maps.Clear();
 
-            bool trigger = inputReadable && Input.IsGameControlPressed(MyControlsSpace.PRIMARY_TOOL_ACTION);
-            bool paint = inputReadable && Input.IsGameControlPressed(MyControlsSpace.CUBE_COLOR_CHANGE);
+            bool trigger = inputReadable && MyAPIGateway.Input.IsGameControlPressed(MyControlsSpace.PRIMARY_TOOL_ACTION);
+            bool paint = inputReadable && MyAPIGateway.Input.IsGameControlPressed(MyControlsSpace.CUBE_COLOR_CHANGE);
 
             if(selectedVoxelMap == null)
             {
@@ -465,10 +384,25 @@ namespace Digi.Concrete
             }
         }
 
+        private bool FilterVoxelEntities(IMyVoxelBase voxelEnt)
+        {
+            if(voxelEnt.StorageName == null)
+                return false;
+
+            // ignore ghost asteroids
+            // explanation: planets don't have physics linked directly to entity and asteroids do have physics and they're disabled when in ghost placement mode, but not null.
+            if(!(voxelEnt is MyPlanet) && (voxelEnt.Physics == null || !voxelEnt.Physics.Enabled))
+                return false;
+
+            // NOTE: (field)target must be set before using this method!
+            var localTarget = Vector3D.Transform(target, voxelEnt.WorldMatrixInvScaled);
+            return voxelEnt.LocalAABB.Contains(localTarget) == ContainmentType.Contains;
+        }
+
         private void SetToolStatus(string text, int aliveTime = 300, string font = MyFontEnum.White)
         {
             if(toolStatus == null)
-                toolStatus = Utilities.CreateNotification("", aliveTime, font);
+                toolStatus = MyAPIGateway.Utilities.CreateNotification("", aliveTime, font);
 
             toolStatus.Font = font;
             toolStatus.Text = text;
@@ -479,7 +413,7 @@ namespace Digi.Concrete
         private void SetAlignStatus(string text, int aliveTime = 300, string font = MyFontEnum.White)
         {
             if(alignStatus == null)
-                alignStatus = Utilities.CreateNotification("", aliveTime, font);
+                alignStatus = MyAPIGateway.Utilities.CreateNotification("", aliveTime, font);
 
             alignStatus.Font = font;
             alignStatus.Text = text;
@@ -490,7 +424,7 @@ namespace Digi.Concrete
         private void SetSnapStatus(string text, int aliveTime = 300, string font = MyFontEnum.White)
         {
             if(snapStatus == null)
-                snapStatus = Utilities.CreateNotification("", aliveTime, font);
+                snapStatus = MyAPIGateway.Utilities.CreateNotification("", aliveTime, font);
 
             snapStatus.Font = font;
             snapStatus.Text = text;
@@ -498,12 +432,11 @@ namespace Digi.Concrete
             snapStatus.Show();
         }
 
-        private bool ToolProcess(IMyVoxelBase voxels, Vector3D target, MatrixD view, bool primaryAction, bool paintAction)
+        private bool ToolProcess(IMyVoxelBase voxelEnt, Vector3D target, MatrixD view, bool primaryAction, bool paintAction)
         {
             placeMatrix.Translation = target;
 
-            var planet = voxels as MyPlanet;
-            IMyVoxelShape placeShape = null;
+            var planet = voxelEnt as MyPlanet;
 
             bool inputReadable = InputHandler.IsInputReadable();
             bool invalidPlacement = false;
@@ -519,19 +452,19 @@ namespace Digi.Concrete
 
             if(inputReadable)
             {
-                shift = Input.IsAnyShiftKeyPressed();
-                ctrl = Input.IsAnyCtrlKeyPressed();
-                alt = Input.IsAnyAltKeyPressed();
+                shift = MyAPIGateway.Input.IsAnyShiftKeyPressed();
+                ctrl = MyAPIGateway.Input.IsAnyCtrlKeyPressed();
+                alt = MyAPIGateway.Input.IsAnyAltKeyPressed();
                 removeMode = ctrl;
 
                 #region Input: scroll (distance/scale)
-                var scroll = Input.DeltaMouseScrollWheelValue();
+                var scroll = MyAPIGateway.Input.DeltaMouseScrollWheelValue();
 
                 if(scroll == 0)
                 {
-                    if(Input.IsNewKeyPressed(MyKeys.Add) || Input.IsNewKeyPressed(MyKeys.OemPlus)) // numpad + or normal +
+                    if(MyAPIGateway.Input.IsNewKeyPressed(MyKeys.Add) || MyAPIGateway.Input.IsNewKeyPressed(MyKeys.OemPlus)) // numpad + or normal +
                         scroll = 1;
-                    else if(Input.IsNewKeyPressed(MyKeys.Subtract) || Input.IsNewKeyPressed(MyKeys.OemMinus)) // numpad - or normal -
+                    else if(MyAPIGateway.Input.IsNewKeyPressed(MyKeys.Subtract) || MyAPIGateway.Input.IsNewKeyPressed(MyKeys.OemMinus)) // numpad - or normal -
                         scroll = -1;
                 }
 
@@ -549,7 +482,7 @@ namespace Digi.Concrete
                         else if(placeScale > MAX_SCALE)
                             placeScale = MAX_SCALE;
                         else
-                            PlaySound("HudItem");
+                            Utils.PlayLocalSound("HudItem");
 
                         SetToolStatus("Scale: " + Math.Round(placeScale, 2), 1500, FONTCOLOR_INFO);
                     }
@@ -565,7 +498,7 @@ namespace Digi.Concrete
                         else if(placeDistance > MAX_DISTANCE)
                             placeDistance = MAX_DISTANCE;
                         else
-                            PlaySound("HudItem");
+                            Utils.PlayLocalSound("HudItem");
 
                         SetToolStatus("Distance: " + Math.Round(placeDistance, 2), 1500, FONTCOLOR_INFO);
                     }
@@ -594,7 +527,7 @@ namespace Digi.Concrete
                 #endregion Input: scroll (distance/scale)
 
                 #region Input: snapping
-                if(Input.IsNewGameControlPressed(MyControlsSpace.FREE_ROTATION))
+                if(MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.FREE_ROTATION))
                 {
                     if(!shift)
                     {
@@ -604,7 +537,7 @@ namespace Digi.Concrete
                         if(++snap > 2)
                             snap = 0;
 
-                        PlaySound("HudClick");
+                        Utils.PlayLocalSound("HudClick");
 
                         switch(snap)
                         {
@@ -621,7 +554,7 @@ namespace Digi.Concrete
                     }
                     else
                     {
-                        PlaySound("HudItem");
+                        Utils.PlayLocalSound("HudItem");
 
                         if(snap == 0 || snap == 1)
                         {
@@ -670,7 +603,7 @@ namespace Digi.Concrete
 
                 #region Input: custom alignment
                 bool increments = ctrl || shift || alt;
-                var rotateInput = RotateInput(increments);
+                var rotateInput = Utils.RotateInput(increments);
 
                 if((rotateInput.X != 0 || rotateInput.Y != 0 || rotateInput.Z != 0))
                 {
@@ -678,12 +611,12 @@ namespace Digi.Concrete
 
                     if(!increments)
                     {
-                        var tmpInputs = RotateInput(true); // checking if this is the first frame player pressed an input axis
+                        var tmpInputs = Utils.RotateInput(true); // checking if this is the first frame player pressed an input axis
                         increments = (tmpInputs.X != 0 || tmpInputs.Y != 0 || tmpInputs.Z != 0); // `increments` var no longer used so we can repurpose it to sound
                     }
 
                     if(increments)
-                        PlaySound("HudRotateBlock");
+                        Utils.PlayLocalSound("HudRotateBlock");
 
                     aligned = true; // next align action will result in a reset
                     double angleRad = ((ctrl ? 90 : (shift ? 15 : (alt ? 1 : 2))) / 180d) * Math.PI;
@@ -733,14 +666,14 @@ namespace Digi.Concrete
                     Vector3D angles;
                     MatrixD.GetEulerAnglesXYZ(ref placeMatrix, out angles);
 
-                    SetAlignStatus($"Align: Custom - {Math.Round(RadiansToDegrees(angles.X))}° / {Math.Round(RadiansToDegrees(angles.Y))}° / {Math.Round(RadiansToDegrees(angles.Z))}°", 500, FONTCOLOR_INFO);
+                    SetAlignStatus($"Align: Custom - {Math.Round(MathHelperD.ToDegrees(angles.X))}° / {Math.Round(MathHelperD.ToDegrees(angles.Y))}° / {Math.Round(MathHelperD.ToDegrees(angles.Z))}°", 500, FONTCOLOR_INFO);
                 }
                 #endregion Input: custom alignment
 
                 #region Input: alignment
-                if(Input.IsNewGameControlPressed(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT) || Input.IsNewGameControlPressed(MyControlsSpace.CUBE_BUILDER_CUBESIZE_MODE))
+                if(MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT) || MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.CUBE_BUILDER_CUBESIZE_MODE))
                 {
-                    var grid = CubeBuilder.FindClosestGrid();
+                    var grid = MyAPIGateway.CubeBuilder.FindClosestGrid();
 
                     if(grid != null)
                     {
@@ -748,12 +681,12 @@ namespace Digi.Concrete
                         aligned = true; // next align action will result in a reset
                         lockAlign = false;
 
-                        SetAlignStatus("Align: Aimed ship", 1500, FONTCOLOR_INFO);
+                        SetAlignStatus("Align: [Aimed ship]", 1500, FONTCOLOR_INFO);
 
                         if(shift)
-                            Utilities.ShowNotification($"NOTE: Shift+{InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT, true)} when aiming at a ship doesn't lock alignment to it!", 3000, MyFontEnum.Red);
+                            MyAPIGateway.Utilities.ShowNotification($"NOTE: Shift+{InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT, true)} when aiming at a ship doesn't lock alignment to it!", 3000, MyFontEnum.Red);
 
-                        PlaySound("HudItem");
+                        Utils.PlayLocalSound("HudItem");
                     }
                     else
                     {
@@ -761,12 +694,12 @@ namespace Digi.Concrete
                         {
                             aligned = false; // next align action will result in an align
                             lockAlign = true;
-                            PlaySound("HudClick");
+                            Utils.PlayLocalSound("HudClick");
                             // nothing else to do here, it'll be done every tick, below.
                         }
                         else
                         {
-                            PlaySound("HudItem");
+                            Utils.PlayLocalSound("HudItem");
                             lockAlign = false;
 
                             if(aligned)
@@ -781,7 +714,7 @@ namespace Digi.Concrete
                             {
                                 aligned = true; // next align action will result in a reset
 
-                                AimToCenter(voxels, view.Forward);
+                                AimToCenter(voxelEnt, view.Forward);
 
                                 SetAlignStatus((planet != null ? "Align: Center of planet" : "Align: Center of asteroid"), 1500, FONTCOLOR_INFO);
                             }
@@ -793,7 +726,7 @@ namespace Digi.Concrete
 
             if(lockAlign)
             {
-                AimToCenter(voxels, view.Forward);
+                AimToCenter(voxelEnt, view.Forward);
 
                 SetAlignStatus((planet != null ? "Align Lock: towards center of planet" : "Align Lock: towards center of asteroid"), 16, FONTCOLOR_CONSTANT);
             }
@@ -801,7 +734,7 @@ namespace Digi.Concrete
             if(snap == 1) // snap to voxel grid
             {
                 // required before snap axis lock but its draw is required after
-                placeMatrix.Translation = voxels.PositionLeftBottomCorner + Vector3I.Round(placeMatrix.Translation - voxels.PositionLeftBottomCorner);
+                placeMatrix.Translation = voxelEnt.PositionLeftBottomCorner + Vector3I.Round(placeMatrix.Translation - voxelEnt.PositionLeftBottomCorner);
             }
 
             if(snapAxisLock) // snapLock AND (no snap OR snap to voxel grid)
@@ -840,7 +773,7 @@ namespace Digi.Concrete
                 {
                     if(!soundPlayed_Unable)
                     {
-                        PlaySound("HudUnable");
+                        Utils.PlayLocalSound("HudUnable");
                         soundPlayed_Unable = true;
                     }
 
@@ -902,7 +835,7 @@ namespace Digi.Concrete
             }
             else if(snap == 2) // snap to distance increments from center
             {
-                var center = voxels.WorldAABB.Center;
+                var center = voxelEnt.WorldAABB.Center;
                 var dir = (placeMatrix.Translation - center);
                 int altitude = (int)Math.Round(dir.Normalize(), 0);
                 placeMatrix.Translation = center + (dir * altitude);
@@ -916,7 +849,7 @@ namespace Digi.Concrete
                     {
                         if(!soundPlayed_Unable)
                         {
-                            PlaySound("HudUnable");
+                            Utils.PlayLocalSound("HudUnable");
                             soundPlayed_Unable = true;
                         }
 
@@ -960,9 +893,114 @@ namespace Digi.Concrete
 
             int cooldownTicks = Math.Max((int)(15 * placeScale), 15);
 
-            const int removeTargetTicks = 20;
-            const int recentActionTicks = 10;
+            var shape = Session.VoxelMaps.GetBoxVoxelHand();
+            var vec = (Vector3D.One / 2) * placeScale;
+            var bb = new BoundingBoxD(-vec, vec);
+            shape.Boundaries = bb;
+            shape.Transform = placeMatrix;
 
+            ToolDrawShape(removeMode, invalidPlacement, cooldownTicks);
+
+            if(invalidPlacement)
+                return false;
+
+            soundPlayed_Unable = false;
+
+            if(cooldown > 0 && --cooldown > 0)
+                return false;
+
+            #region Ammo check
+            if((primaryAction && !removeMode) || paintAction)
+            {
+                var character = MyAPIGateway.Session.Player.Character;
+                var inv = character.GetInventory();
+                var type = (paintAction ? VoxelActionEnum.PAINT_VOXEL : (removeMode ? VoxelActionEnum.REMOVE_VOXEL : VoxelActionEnum.ADD_VOXEL));
+
+                if(inv.GetItemAmount(CONCRETE_MAG_DEFID) < Utils.GetAmmoUsage(type, placeScale))
+                {
+                    Utils.PlayLocalSound("HudUnable");
+                    SetToolStatus($"You need Concrete Mix to use this tool!", 1500, MyFontEnum.Red);
+                    return false;
+                }
+            }
+            #endregion Ammo check
+
+            #region Actions
+            if(paintAction)
+            {
+                cooldown = cooldownTicks;
+                VoxelAction(VoxelActionEnum.PAINT_VOXEL, voxelEnt, shape, placeScale, Session.Player.Character);
+                ToolAction(VoxelActionEnum.PAINT_VOXEL, Session.Player.Character, placeScale, shape.Transform.Translation);
+                return true;
+            }
+            else if(primaryAction)
+            {
+                ++holdPress;
+
+                if(removeMode)
+                {
+                    if(holdPress % 3 == 0)
+                        SetToolStatus("Removing " + (int)(((float)holdPress / (float)REMOVE_TARGET_TICKS) * 100f) + "%...", 100, MyFontEnum.Red);
+
+                    if(holdPress >= REMOVE_TARGET_TICKS)
+                    {
+                        holdPress = 0;
+                        cooldown = cooldownTicks;
+
+                        VoxelAction(VoxelActionEnum.REMOVE_VOXEL, voxelEnt, shape, placeScale, Session.Player.Character);
+                        ToolAction(VoxelActionEnum.REMOVE_VOXEL, Session.Player.Character, placeScale, shape.Transform.Translation);
+                    }
+                }
+                else
+                {
+                    #region Check for obstructions
+                    // HACK: This is how the game checks it and I can't prevent it; I must also do it myself to prevent wasting ammo.
+                    highlightEnts.Clear();
+                    var shapeBB = shape.GetWorldBoundary();
+                    MyGamePruningStructure.GetTopMostEntitiesInBox(ref shapeBB, highlightEnts, MyEntityQueryType.Dynamic);
+                    highlightEnts.RemoveAll(e => !(e is IMyCubeGrid || e is IMyCharacter || e is IMyFloatingObject) || !e.PositionComp.WorldAABB.Intersects(shapeBB));
+                    var localPlayerFound = highlightEnts.Remove((MyEntity)MyAPIGateway.Session.Player.Character);
+
+                    if(localPlayerFound || highlightEnts.Count > 0)
+                    {
+                        Utils.PlayLocalSound("HudUnable");
+
+                        if(highlightEnts.Count == 0)
+                        {
+                            SetToolStatus("You're in the way!", 1500, MyFontEnum.Red);
+                        }
+                        else
+                        {
+                            SetToolStatus((localPlayerFound ? "You and " : "") + (highlightEnts.Count == 1 ? (localPlayerFound ? "one" : "One") + " thing " : highlightEnts.Count + " things ") + (localPlayerFound || highlightEnts.Count > 1 ? "are" : "is") + " in the way!", 1500, MyFontEnum.Red);
+                        }
+
+                        highlightEntsTicks = 0; // reset fadeout timer
+                        cooldown = (cooldownTicks - RECENT_ACTION_TICKS); // prevent quick retry, color the box and also prevent highlight by removing their ticks
+                        holdPress = 0;
+                        return false;
+                    }
+
+                    // don't clear highlightEnts because it's used to highlight them elsewhere
+                    #endregion
+
+                    cooldown = cooldownTicks;
+
+                    VoxelAction(VoxelActionEnum.ADD_VOXEL, voxelEnt, shape, placeScale, Session.Player.Character);
+                    ToolAction(VoxelActionEnum.ADD_VOXEL, Session.Player.Character, placeScale, shape.Transform.Translation);
+                    return true;
+                }
+            }
+            else
+            {
+                holdPress = 0;
+            }
+
+            return false;
+            #endregion
+        }
+
+        private void ToolDrawShape(bool removeMode, bool invalidPlacement, int cooldownTicks)
+        {
             var colorWire = Color.Lime * 0.4f;
             var colorFace = Color.Green * 0.2f;
 
@@ -971,7 +1009,7 @@ namespace Digi.Concrete
                 colorWire = Color.White * 0.1f;
                 colorFace = Color.DarkGray * 0.1f;
             }
-            else if(cooldown > (cooldownTicks - recentActionTicks)) // just placed/removed
+            else if(cooldown > (cooldownTicks - RECENT_ACTION_TICKS)) // just placed/removed
             {
                 colorWire = (removeMode ? Color.Red : Color.Lime) * 2;
                 colorFace = (removeMode ? Color.DarkRed : Color.Green) * 0.3f;
@@ -987,87 +1025,78 @@ namespace Digi.Concrete
                 colorFace = Color.DarkRed * 0.2f;
             }
 
-            var shape = Session.VoxelMaps.GetBoxVoxelHand();
-            var vec = (Vector3D.One / 2) * placeScale;
-            var bb = new BoundingBoxD(-vec, vec);
-            shape.Boundaries = bb;
-            shape.Transform = placeMatrix;
-            placeShape = shape;
+            // optimized box draw compared to MySimpleObjectDraw.DrawTransparentBox; also allows consistent edge thickness
+            MyQuadD quad;
+            Vector3D p;
+            MatrixD m;
+            var halfScale = (placeScale / 2);
+            float lineLength = placeScale;
+            var material = MATERIAL_SQUARE;
+            const float ROTATE_90_RAD = (90f / 180f * MathHelper.Pi); // 90deg in radians
+            const float LINE_WIDTH = 0.015f;
 
-            // optimized box draw; also allows consistent edge thickness
+            p = placeMatrix.Translation + placeMatrix.Forward * halfScale;
+            if(Utils.IsFaceVisible(p, placeMatrix.Forward))
             {
-                MyQuadD quad;
-                Vector3D p;
-                MatrixD m;
-                var halfScale = (placeScale / 2);
-                var rad = MathHelper.ToRadians(90);
-                var material = MATERIAL_SQUARE;
-                const float LINE_WIDTH = 0.015f;
-                float lineLength = placeScale;
-
-                p = placeMatrix.Translation + placeMatrix.Forward * halfScale;
-                if(IsFaceVisible(p, placeMatrix.Forward))
-                {
-                    MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref placeMatrix);
-                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
-                }
-
-                p = placeMatrix.Translation + placeMatrix.Backward * halfScale;
-                if(IsFaceVisible(p, placeMatrix.Backward))
-                {
-                    MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref placeMatrix);
-                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
-                }
-
-                p = placeMatrix.Translation + placeMatrix.Left * halfScale;
-                m = placeMatrix * MatrixD.CreateFromAxisAngle(placeMatrix.Up, rad);
-                if(IsFaceVisible(p, placeMatrix.Left))
-                {
-                    MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref m);
-                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
-                }
-
-                p = placeMatrix.Translation + placeMatrix.Right * halfScale;
-                if(IsFaceVisible(p, placeMatrix.Right))
-                {
-                    MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref m);
-                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
-                }
-
-                m = placeMatrix * MatrixD.CreateFromAxisAngle(placeMatrix.Left, rad);
-                p = placeMatrix.Translation + placeMatrix.Up * halfScale;
-                if(IsFaceVisible(p, placeMatrix.Up))
-                {
-                    MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref m);
-                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
-                }
-
-                p = placeMatrix.Translation + placeMatrix.Down * halfScale;
-                if(IsFaceVisible(p, placeMatrix.Down))
-                {
-                    MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref m);
-                    MyTransparentGeometry.AddQuad(MATERIAL_SQUARE, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
-                }
-
-                var upHalf = (placeMatrix.Up * halfScale);
-                var rightHalf = (placeMatrix.Right * halfScale);
-                var forwardHalf = (placeMatrix.Forward * halfScale);
-
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + upHalf + -rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + upHalf + rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -upHalf + -rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -upHalf + rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + -rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + -rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + -upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + -upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref placeMatrix);
+                MyTransparentGeometry.AddQuad(material, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
             }
+
+            p = placeMatrix.Translation + placeMatrix.Backward * halfScale;
+            if(Utils.IsFaceVisible(p, placeMatrix.Backward))
+            {
+                MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref placeMatrix);
+                MyTransparentGeometry.AddQuad(material, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
+            }
+
+            p = placeMatrix.Translation + placeMatrix.Left * halfScale;
+            m = placeMatrix * MatrixD.CreateFromAxisAngle(placeMatrix.Up, ROTATE_90_RAD);
+            if(Utils.IsFaceVisible(p, placeMatrix.Left))
+            {
+                MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref m);
+                MyTransparentGeometry.AddQuad(material, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
+            }
+
+            p = placeMatrix.Translation + placeMatrix.Right * halfScale;
+            if(Utils.IsFaceVisible(p, placeMatrix.Right))
+            {
+                MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref m);
+                MyTransparentGeometry.AddQuad(material, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
+            }
+
+            m = placeMatrix * MatrixD.CreateFromAxisAngle(placeMatrix.Left, ROTATE_90_RAD);
+            p = placeMatrix.Translation + placeMatrix.Up * halfScale;
+            if(Utils.IsFaceVisible(p, placeMatrix.Up))
+            {
+                MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref m);
+                MyTransparentGeometry.AddQuad(material, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
+            }
+
+            p = placeMatrix.Translation + placeMatrix.Down * halfScale;
+            if(Utils.IsFaceVisible(p, placeMatrix.Down))
+            {
+                MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref m);
+                MyTransparentGeometry.AddQuad(material, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
+            }
+
+            var upHalf = (placeMatrix.Up * halfScale);
+            var rightHalf = (placeMatrix.Right * halfScale);
+            var forwardHalf = (placeMatrix.Forward * halfScale);
+
+            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + upHalf + -rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + upHalf + rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -upHalf + -rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -upHalf + rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+
+            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + -rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + -rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+
+            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + -upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + -upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
 
             // TODO more shapes? (set shape)
             //switch(selectedShape)
@@ -1112,237 +1141,15 @@ namespace Digi.Concrete
             //            break;
             //        }
             //}
-
-            if(invalidPlacement)
-                return false;
-
-            soundPlayed_Unable = false;
-
-            if(cooldown > 0 && --cooldown > 0)
-                return false;
-
-            #region Ammo check
-            if((primaryAction && !removeMode) || paintAction)
-            {
-                var character = MyAPIGateway.Session.Player.Character;
-                var inv = character.GetInventory();
-                var type = (paintAction ? PacketType.PAINT_VOXEL : (removeMode ? PacketType.REMOVE_VOXEL : PacketType.PLACE_VOXEL));
-
-                if(inv.GetItemAmount(CONCRETE_MAG_DEFID) < GetAmmoUsage(type, placeScale))
-                {
-                    PlaySound("HudUnable");
-                    SetToolStatus($"You need Concrete Mix to use this tool!", 1500, MyFontEnum.Red);
-                    return false;
-                }
-            }
-            #endregion Ammo check
-
-            float soundVolume = MathHelper.Clamp(((placeScale / 3f) * 0.9f), 0.3f, 0.9f);
-
-            if(paintAction)
-            {
-                VoxelAction(PacketType.PAINT_VOXEL, voxels, placeShape, placeScale, material.Index, Session.Player.Character);
-                PlaySound("ConcreteTool_PlaceConcrete", soundVolume);
-                cooldown = cooldownTicks;
-                return true;
-            }
-            else if(primaryAction)
-            {
-                ++holdPress;
-
-                if(removeMode)
-                {
-                    if(holdPress % 3 == 0)
-                        SetToolStatus("Removing " + (int)(((float)holdPress / (float)removeTargetTicks) * 100f) + "%...", 100, MyFontEnum.Red);
-
-                    if(holdPress >= removeTargetTicks)
-                    {
-                        holdPress = 0;
-                        cooldown = cooldownTicks;
-                        VoxelAction(PacketType.REMOVE_VOXEL, voxels, placeShape, placeScale);
-                        PlaySound("ConcreteTool_RemoveTerrain", soundVolume);
-                    }
-                }
-                else
-                {
-                    #region Check for obstructions
-                    // This is how the game checks it and I can't prevent it; I must also do it myself to prevent wasting ammo.
-                    highlightEnts.Clear();
-                    var shapeBB = placeShape.GetWorldBoundary();
-                    MyGamePruningStructure.GetTopMostEntitiesInBox(ref shapeBB, highlightEnts, MyEntityQueryType.Dynamic);
-                    highlightEnts.RemoveAll(e => !(e is IMyCubeGrid || e is IMyCharacter || e is IMyFloatingObject) || !e.PositionComp.WorldAABB.Intersects(shapeBB));
-                    var localPlayerFound = highlightEnts.Remove((MyEntity)MyAPIGateway.Session.Player.Character);
-
-                    if(localPlayerFound || highlightEnts.Count > 0)
-                    {
-                        PlaySound("HudUnable");
-
-                        if(highlightEnts.Count == 0)
-                        {
-                            SetToolStatus("You're in the way!", 1500, MyFontEnum.Red);
-                        }
-                        else
-                        {
-                            SetToolStatus((localPlayerFound ? "You and " : "") + (highlightEnts.Count == 1 ? (localPlayerFound ? "one" : "One") + " thing " : highlightEnts.Count + " things ") + (localPlayerFound || highlightEnts.Count > 1 ? "are" : "is") + " in the way!", 1500, MyFontEnum.Red);
-                        }
-
-                        highlightEntsTicks = 0; // reset fadeout timer
-                        cooldown = (cooldownTicks - recentActionTicks); // prevent quick retry, color the box and also prevent highlight by removing their ticks
-                        holdPress = 0;
-                        return false;
-                    }
-
-                    // don't clear highlightEnts because it's used to highlight them elsewhere
-                    #endregion
-
-                    cooldown = cooldownTicks;
-                    VoxelAction(PacketType.PLACE_VOXEL, voxels, placeShape, placeScale, material.Index, Session.Player.Character);
-                    PlaySound("ConcreteTool_PlaceConcrete", soundVolume);
-                    return true;
-                }
-            }
-            else
-            {
-                holdPress = 0;
-            }
-
-            return false;
         }
 
-        private static MyFixedPoint GetAmmoUsage(PacketType type, float scale)
+        private void AimToCenter(IMyVoxelBase voxelEnt, Vector3D forward)
         {
-            if(type == PacketType.PLACE_VOXEL)
-                return (MyFixedPoint)(CONCRETE_PLACE_USE * scale);
-
-            if(type == PacketType.PAINT_VOXEL)
-                return (MyFixedPoint)(CONCRETE_PAINT_USE * scale);
-
-            return 0;
-        }
-
-        private void AimToCenter(IMyVoxelBase voxels, Vector3D forward)
-        {
-            var center = voxels.WorldAABB.Center;
+            var center = voxelEnt.WorldAABB.Center;
             var dir = (placeMatrix.Translation - center);
             var altitude = dir.Normalize();
             placeMatrix = MatrixD.CreateFromDir(dir, forward);
             placeMatrix.Translation = center + (dir * altitude);
-        }
-
-        private static bool IsFaceVisible(Vector3D origin, Vector3 normal)
-        {
-            var dir = (origin - MyTransparentGeometry.Camera.Translation);
-            return Vector3D.Dot(normal, dir) < 0;
-        }
-
-        /// <summary>
-        /// Because MathHelper.ToDegrees() no longer has a double value, was moved to MathHelperD and I really don't wanna deal with that compatibility issue.
-        /// </summary>
-        private static double RadiansToDegrees(double radians)
-        {
-            return radians * 180d / Math.PI;
-        }
-
-        private Vector3I RotateInput(bool newPressed)
-        {
-            Vector3I result;
-
-            if(newPressed)
-            {
-                result.X = (Input.IsNewGameControlPressed(MyControlsSpace.CUBE_ROTATE_HORISONTAL_NEGATIVE) ? -1 : (Input.IsNewGameControlPressed(MyControlsSpace.CUBE_ROTATE_HORISONTAL_POSITIVE) ? 1 : 0));
-                result.Y = (Input.IsNewGameControlPressed(MyControlsSpace.CUBE_ROTATE_VERTICAL_NEGATIVE) ? -1 : (Input.IsNewGameControlPressed(MyControlsSpace.CUBE_ROTATE_VERTICAL_POSITIVE) ? 1 : 0));
-                result.Z = (Input.IsNewGameControlPressed(MyControlsSpace.CUBE_ROTATE_ROLL_NEGATIVE) ? -1 : (Input.IsNewGameControlPressed(MyControlsSpace.CUBE_ROTATE_ROLL_POSITIVE) ? 1 : 0));
-            }
-            else
-            {
-                result.X = (Input.IsGameControlPressed(MyControlsSpace.CUBE_ROTATE_HORISONTAL_NEGATIVE) ? -1 : (Input.IsGameControlPressed(MyControlsSpace.CUBE_ROTATE_HORISONTAL_POSITIVE) ? 1 : 0));
-                result.Y = (Input.IsGameControlPressed(MyControlsSpace.CUBE_ROTATE_VERTICAL_NEGATIVE) ? -1 : (Input.IsGameControlPressed(MyControlsSpace.CUBE_ROTATE_VERTICAL_POSITIVE) ? 1 : 0));
-                result.Z = (Input.IsGameControlPressed(MyControlsSpace.CUBE_ROTATE_ROLL_NEGATIVE) ? -1 : (Input.IsGameControlPressed(MyControlsSpace.CUBE_ROTATE_ROLL_POSITIVE) ? 1 : 0));
-            }
-
-            return result;
-        }
-
-        public static void PlaySound(string name, float volume = 0.3f)
-        {
-            var emitter = new MyEntity3DSoundEmitter((MyEntity)MyAPIGateway.Session.ControlledObject.Entity);
-            emitter.CustomVolume = volume;
-            emitter.PlaySingleSound(new MySoundPair(name));
-        }
-
-        public void MessageEntered(string msg, ref bool send)
-        {
-            if(msg.StartsWith("/concrete", StringComparison.InvariantCultureIgnoreCase))
-            {
-                send = false;
-
-                msg = msg.Substring("/concrete".Length).Trim();
-
-                if(msg.StartsWith("help", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    ShowHelp();
-                    return;
-                }
-
-                Utilities.ShowMessage(Log.modName, "Commands:");
-                Utilities.ShowMessage("/concrete help ", "key combination information");
-            }
-        }
-
-        private void ShowHelp()
-        {
-            seenHelp = true;
-
-            var inputFire = InputHandler.GetAssignedGameControlNames(MyControlsSpace.PRIMARY_TOOL_ACTION);
-            var inputPaint = InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_COLOR_CHANGE);
-            var inputHelp = InputHandler.GetAssignedGameControlNames(MyControlsSpace.SECONDARY_TOOL_ACTION);
-            var inputAlign = InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT);
-            var inputSnap = InputHandler.GetAssignedGameControlNames(MyControlsSpace.FREE_ROTATION, true);
-            var inputCycleMap = InputHandler.GetAssignedGameControlNames(MyControlsSpace.USE);
-            string[] inputsRotation =
-            {
-                InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_ROTATE_HORISONTAL_NEGATIVE, true),
-                InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_ROTATE_HORISONTAL_POSITIVE, true),
-                InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_ROTATE_VERTICAL_NEGATIVE, true),
-                InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_ROTATE_VERTICAL_POSITIVE, true),
-                InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_ROTATE_ROLL_NEGATIVE, true),
-                InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_ROTATE_ROLL_POSITIVE, true),
-            };
-
-            var str = new StringBuilder();
-
-            str.AppendLine("The concrete tool is a hand-held tool that allows placement of concrete\n  on to asteroids or planets.");
-            str.AppendLine("The tool and ammo for it can be made in an assembler.");
-            str.AppendLine("While holding the tool, you must be near a planet or asteroid to use it.");
-            str.AppendLine();
-            str.AppendLine("Controls:");
-            str.AppendLine();
-            str.Append(inputFire).Append(" = place concrete.").AppendLine();
-            str.AppendLine();
-            str.Append(inputPaint).Append(" = replace terrain with concrete.").AppendLine();
-            str.AppendLine();
-            str.Append("Ctrl+").Append(inputFire).Append(" (hold) = remove terrain.").AppendLine();
-            str.AppendLine();
-            str.Append("Shift+MouseScroll/Plus/Minus = adjust box scale.").AppendLine();
-            str.AppendLine();
-            str.Append("Ctrl+MouseScroll/Plus/Minus = adjust box distance.").AppendLine();
-            str.AppendLine();
-            str.Append(inputAlign).Append(" = cycles alignment mode: reset alignment / align towards\n  center of asteroid/planet / align with aimed at grid.").AppendLine();
-            str.AppendLine();
-            str.Append(inputSnap).Append(" = cycles snap mode: no snap / snap voxel grid / snap to altitude.").AppendLine();
-            str.AppendLine();
-            str.Append("Shift+").Append(inputSnap).Append(" = depending on snap mode: lock to axis/plane / lock to altitude.").AppendLine();
-            str.AppendLine();
-            str.Append(inputCycleMap).Append(" = cycle between overlapping voxel maps.").AppendLine();
-            str.AppendLine();
-            str.Append(string.Join(",", inputsRotation)).Append(" = rotate the box.").AppendLine();
-            str.AppendLine("  ...+Alt = rotate 1 degree increments.");
-            str.AppendLine("  ...+Shift = rotate 15 degree increments.");
-            str.AppendLine("  ...+Ctrl = rotate 90 degree increments.");
-            str.AppendLine();
-            str.Append(inputHelp).Append(" = show this window.").AppendLine();
-
-            Utilities.ShowMissionScreen("Concrete Tool Help", string.Empty, string.Empty, str.ToString(), null, "Close");
         }
     }
 }

@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using VRage.Input;
 using VRage.ModAPI;
 using VRage.Utils;
-using VRage.Game.ModAPI;
 using static Sandbox.ModAPI.MyAPIGateway;
 
 namespace Digi

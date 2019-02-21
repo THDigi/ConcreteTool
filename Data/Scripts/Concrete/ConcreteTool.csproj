@@ -102,11 +102,16 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Concrete.cs" />
+    <Compile Include="ChatCommands.cs" />
+    <Compile Include="ConcreteToolMod.cs" />
     <Compile Include="InputHandler.cs" />
     <Compile Include="Log.cs" />
-    <Compile Include="PacketHandler.cs" />
+    <Compile Include="MP\Networking.cs" />
+    <Compile Include="MP\PacketBase.cs" />
+    <Compile Include="MP\PacketToolAction.cs" />
+    <Compile Include="MP\PacketVoxelAction.cs" />
     <Compile Include="Tool.cs" />
+    <Compile Include="Utils.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
