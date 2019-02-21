@@ -1,0 +1,1649 @@
+<?xml version="1.0"?>
+<Definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Definition xsi:type="AnimationControllerDefinition">
+    <Id Type="MyObjectBuilder_AnimationControllerDefinition" Subtype="Default_Astronaut_Female" />
+    <Layers>
+      <Layer>
+        <Name>ConcreteTool_RightHand</Name>
+        <Mode>Replace</Mode>
+        <StateMachine>ConcreteTool_SMRightHand</StateMachine>
+        <InitialSMNode>Nothing</InitialSMNode>
+        <BoneMask>HeadDummy SE_RigHead SE_RigNeck SE_RigR_Index_1 SE_RigR_Index_2 SE_RigR_Index_3 SE_RigR_Little_1 SE_RigR_Little_2 SE_RigR_Little_3 SE_RigR_Middle_1 SE_RigR_Middle_2 SE_RigR_Middle_3 SE_RigR_Ring_1 SE_RigR_Ring_2 SE_RigR_Ring_3 SE_RigR_Thumb_1 SE_RigR_Thumb_2 SE_RigR_Thumb_3 SE_RigR_Weapon_pin SE_RigRCollarbone SE_RigRForearm1 SE_RigRForearm2 SE_RigRForearm3 SE_RigRPalm SE_RigRUpperarm SE_RigRUpVectorNode</BoneMask>
+      </Layer>
+      <Layer>
+        <Name>ConcreteTool_WeaponPin</Name>
+        <Mode>Replace</Mode>
+        <StateMachine>ConcreteTool_SMWeaponPin</StateMachine>
+        <InitialSMNode>Nothing</InitialSMNode>
+        <BoneMask>BackJetpackDummy FrontJetpackDummy SE_RigHead SE_RigL_Index_1 SE_RigL_Index_2 SE_RigL_Index_3 SE_RigL_Little_1 SE_RigL_Little_2 SE_RigL_Little_3 SE_RigL_Middle_1 SE_RigL_Middle_2 SE_RigL_Middle_3 SE_RigL_Ring_1 SE_RigL_Ring_2 SE_RigL_Ring_3 SE_RigL_Thumb_1 SE_RigL_Thumb_2 SE_RigL_Thumb_3 SE_RigL_Weapon_pin SE_RigLCollarbone SE_RigLForearm1 SE_RigLForearm2 SE_RigLForearm3 SE_RigLPalm SE_RigLUpperarm SE_RigNeck SE_RigR_Index_1 SE_RigR_Index_2 SE_RigR_Index_3 SE_RigR_Little_1 SE_RigR_Little_2 SE_RigR_Little_3 SE_RigR_Middle_1 SE_RigR_Middle_2 SE_RigR_Middle_3 SE_RigR_Ring_1 SE_RigR_Ring_2 SE_RigR_Ring_3 SE_RigR_Thumb_1 SE_RigR_Thumb_2 SE_RigR_Thumb_3 SE_RigR_Weapon_pin SE_RigRCollarbone SE_RigRForearm1 SE_RigRForearm2 SE_RigRForearm3 SE_RigRibcage SE_RigRibcageBone001 SE_RigRPalm SE_RigRUpperarm SE_RigSpine1 SE_RigSpine2 SE_RigSpine3 SE_RigSpine4</BoneMask>
+      </Layer>
+      <Layer>
+        <Name>ConcreteTool_Hip</Name>
+        <Mode>Add</Mode>
+        <StateMachine>ConcreteTool_SMHip</StateMachine>
+        <InitialSMNode>Nothing</InitialSMNode>
+        <BoneMask>BackJetpackDummy FrontJetpackDummy SE_RigPelvis SE_RigSpine1 SE_RigSpine2 SE_RigSpine3 SE_RigSpine4</BoneMask>
+      </Layer>
+    </Layers>
+    <StateMachines>
+      <StateMachine>
+        <Name>ConcreteTool_SMWeaponPin</Name>
+        <Nodes>
+          <Node>
+            <Name>Nothing</Name>
+            <AnimationTree>
+              <EdPos>
+                <X>-204</X>
+                <Y>-6</Y>
+              </EdPos>
+              <Child xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                <EdPos>
+                  <X>122</X>
+                  <Y>11</Y>
+                </EdPos>
+                <Loop>true</Loop>
+                <Speed>1</Speed>
+                <Interpolate>true</Interpolate>
+              </Child>
+            </AnimationTree>
+            <EdPos>
+              <X>-926</X>
+              <Y>-275</Y>
+            </EdPos>
+            <Type>Normal</Type>
+            <Variables />
+          </Node>
+          <Node>
+            <Name>Sprint</Name>
+            <AnimationTree>
+              <EdPos>
+                <X>-817</X>
+                <Y>-155</Y>
+              </EdPos>
+              <Child xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                <EdPos>
+                  <X>-256</X>
+                  <Y>-254</Y>
+                </EdPos>
+                <ParameterName>shooting</ParameterName>
+                <Circular>false</Circular>
+                <Sensitivity>0.199999988</Sensitivity>
+                <MaxChange xsi:nil="true" />
+                <Child>
+                  <Param>0</Param>
+                  <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                    <EdPos>
+                      <X>420</X>
+                      <Y>-487</Y>
+                    </EdPos>
+                    <ParameterName>firstperson</ParameterName>
+                    <Circular>false</Circular>
+                    <Sensitivity>0.199999988</Sensitivity>
+                    <MaxChange xsi:nil="true" />
+                    <Child>
+                      <Param>0</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                        <EdPos>
+                          <X>1108</X>
+                          <Y>-562</Y>
+                        </EdPos>
+                        <PathToModel>Models\Characters\Animations\Female\rifle_aim_straight.mwm</PathToModel>
+                        <Loop>true</Loop>
+                        <Speed>1</Speed>
+                        <Interpolate>true</Interpolate>
+                        <SynchronizeWithLayer>Body</SynchronizeWithLayer>
+                      </Node>
+                    </Child>
+                    <Child>
+                      <Param>1</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                        <EdPos>
+                          <X>1080</X>
+                          <Y>-212</Y>
+                        </EdPos>
+                        <PathToModel>Models\Characters\Animations\Female\rifle_first_aim_straight.mwm</PathToModel>
+                        <Loop>true</Loop>
+                        <Speed>1</Speed>
+                        <Interpolate>true</Interpolate>
+                        <SynchronizeWithLayer>Body</SynchronizeWithLayer>
+                      </Node>
+                    </Child>
+                  </Node>
+                </Child>
+                <Child>
+                  <Param>1</Param>
+                  <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                    <EdPos>
+                      <X>586</X>
+                      <Y>247</Y>
+                    </EdPos>
+                    <ParameterName>lean</ParameterName>
+                    <Circular>false</Circular>
+                    <Sensitivity>1</Sensitivity>
+                    <MaxChange xsi:nil="true" />
+                    <Child>
+                      <Param>-36</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                        <EdPos>
+                          <X>1081</X>
+                          <Y>92</Y>
+                        </EdPos>
+                        <PathToModel>Models\Characters\Animations\Female\rifle_aim_down.mwm</PathToModel>
+                        <Loop>true</Loop>
+                        <Speed>1</Speed>
+                        <Interpolate>true</Interpolate>
+                      </Node>
+                    </Child>
+                    <Child>
+                      <Param>0</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                        <EdPos>
+                          <X>1088</X>
+                          <Y>356</Y>
+                        </EdPos>
+                        <PathToModel>Models\Characters\Animations\Female\rifle_aim_straight.mwm</PathToModel>
+                        <Loop>true</Loop>
+                        <Speed>1</Speed>
+                        <Interpolate>true</Interpolate>
+                      </Node>
+                    </Child>
+                    <Child>
+                      <Param>22</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                        <EdPos>
+                          <X>1092</X>
+                          <Y>607</Y>
+                        </EdPos>
+                        <PathToModel>Models\Characters\Animations\Female\rifle_aim_up.mwm</PathToModel>
+                        <Loop>true</Loop>
+                        <Speed>1</Speed>
+                        <Interpolate>true</Interpolate>
+                      </Node>
+                    </Child>
+                  </Node>
+                </Child>
+              </Child>
+            </AnimationTree>
+            <EdPos>
+              <X>-546</X>
+              <Y>-258</Y>
+            </EdPos>
+            <Type>Normal</Type>
+            <Variables />
+          </Node>
+          <Node>
+            <Name>Any</Name>
+            <AnimationTree>
+              <EdPos>
+                <X>-139</X>
+                <Y>-2</Y>
+              </EdPos>
+              <Orphans />
+            </AnimationTree>
+            <EdPos>
+              <X>-1198</X>
+              <Y>-306</Y>
+            </EdPos>
+            <Type>AnyExceptTarget</Type>
+            <Variables />
+          </Node>
+          <Node>
+            <Name>Equip</Name>
+            <AnimationTree>
+              <EdPos>
+                <X>0</X>
+                <Y>0</Y>
+              </EdPos>
+              <Child xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                <EdPos>
+                  <X>256</X>
+                  <Y>0</Y>
+                </EdPos>
+                <Loop>true</Loop>
+                <Speed>1</Speed>
+                <Interpolate>true</Interpolate>
+              </Child>
+            </AnimationTree>
+            <EdPos>
+              <X>-925</X>
+              <Y>-376</Y>
+            </EdPos>
+            <Type>PassThrough</Type>
+            <Variables />
+          </Node>
+          <Node>
+            <Name>Idle</Name>
+            <AnimationTree>
+              <EdPos>
+                <X>-3018</X>
+                <Y>254</Y>
+              </EdPos>
+              <Child xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                <EdPos>
+                  <X>-2433</X>
+                  <Y>369</Y>
+                </EdPos>
+                <ParameterName>firstperson</ParameterName>
+                <Circular>false</Circular>
+                <Sensitivity>1</Sensitivity>
+                <MaxChange xsi:nil="true" />
+                <Child>
+                  <Param>0</Param>
+                  <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                    <EdPos>
+                      <X>-1030</X>
+                      <Y>-861</Y>
+                    </EdPos>
+                    <ParameterName>lean</ParameterName>
+                    <Circular>false</Circular>
+                    <Sensitivity>1</Sensitivity>
+                    <MaxChange xsi:nil="true" />
+                    <Child>
+                      <Param>-36</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                        <EdPos>
+                          <X>-78</X>
+                          <Y>-1127</Y>
+                        </EdPos>
+                        <ParameterName>ironsight</ParameterName>
+                        <Circular>false</Circular>
+                        <Sensitivity>1</Sensitivity>
+                        <MaxChange xsi:nil="true" />
+                        <Child>
+                          <Param>0</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>886</X>
+                              <Y>-1223</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_aim_down.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>1</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>892</X>
+                              <Y>-954</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_aim_down.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                      </Node>
+                    </Child>
+                    <Child>
+                      <Param>0</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                        <EdPos>
+                          <X>-102</X>
+                          <Y>-649</Y>
+                        </EdPos>
+                        <ParameterName>ironsight</ParameterName>
+                        <Circular>false</Circular>
+                        <Sensitivity>1</Sensitivity>
+                        <MaxChange xsi:nil="true" />
+                        <Child>
+                          <Param>0</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>888</X>
+                              <Y>-679</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_aim_straight.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>1</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>879</X>
+                              <Y>-417</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_aim_straight.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                      </Node>
+                    </Child>
+                    <Child>
+                      <Param>22</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                        <EdPos>
+                          <X>-97</X>
+                          <Y>-248</Y>
+                        </EdPos>
+                        <ParameterName>ironsight</ParameterName>
+                        <Circular>false</Circular>
+                        <Sensitivity>1</Sensitivity>
+                        <MaxChange xsi:nil="true" />
+                        <Child>
+                          <Param>0</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>906</X>
+                              <Y>-149</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_aim_up.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>1</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>898</X>
+                              <Y>150</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_aim_up.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                      </Node>
+                    </Child>
+                  </Node>
+                </Child>
+                <Child>
+                  <Param>1</Param>
+                  <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                    <EdPos>
+                      <X>-992</X>
+                      <Y>1458</Y>
+                    </EdPos>
+                    <ParameterName>crouch</ParameterName>
+                    <Circular>false</Circular>
+                    <Sensitivity>0.08</Sensitivity>
+                    <MaxChange xsi:nil="true" />
+                    <Child>
+                      <Param>0</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                        <EdPos>
+                          <X>-67</X>
+                          <Y>793</Y>
+                        </EdPos>
+                        <ParameterName>lean</ParameterName>
+                        <Circular>false</Circular>
+                        <Sensitivity>1</Sensitivity>
+                        <MaxChange xsi:nil="true" />
+                        <Child>
+                          <Param>-36</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>870</X>
+                              <Y>591</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_aim_down.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>0</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>877</X>
+                              <Y>855</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_aim_straight.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>18</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>882</X>
+                              <Y>1115</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_aim_up.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>40</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>892</X>
+                              <Y>1367</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_aim_upmore.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                      </Node>
+                    </Child>
+                    <Child>
+                      <Param>1</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                        <EdPos>
+                          <X>170</X>
+                          <Y>2244</Y>
+                        </EdPos>
+                        <ParameterName>lean</ParameterName>
+                        <Circular>false</Circular>
+                        <Sensitivity>0.38</Sensitivity>
+                        <MaxChange xsi:nil="true" />
+                        <Child>
+                          <Param>-36</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>886</X>
+                              <Y>1782</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_downmore.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>-18</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>909</X>
+                              <Y>2127</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_down.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>0</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>909</X>
+                              <Y>2440</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_straight.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>18</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>920</X>
+                              <Y>2715</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_up.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>40</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>917</X>
+                              <Y>2961</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_upmore.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                      </Node>
+                    </Child>
+                  </Node>
+                </Child>
+              </Child>
+            </AnimationTree>
+            <EdPos>
+              <X>-709</X>
+              <Y>-256</Y>
+            </EdPos>
+            <Type>Normal</Type>
+            <Variables />
+          </Node>
+          <Node>
+            <Name>Equipped</Name>
+            <EdPos>
+              <X>-717</X>
+              <Y>-380</Y>
+            </EdPos>
+            <Type>Normal</Type>
+            <Variables />
+          </Node>
+        </Nodes>
+        <Transitions>
+          <Transition Name="unequip_right_tool" From="Any" To="Nothing" TimeInSec="0.1" Sync="Restart" Curve="Smooth">
+            <Priority xsi:nil="true" />
+          </Transition>
+          <Transition Name="OFF" From="Idle" To="Sprint" TimeInSec="0.5" Sync="Restart" Curve="EaseIn">
+            <Conditions>
+              <Conjunction>
+                <Condition Lhs="speed" Op="GreaterOrEqual" Rhs="7" />
+                <Condition Lhs="flying" Op="Equal" Rhs="0" />
+                <Condition Lhs="jumping" Op="Equal" Rhs="0" />
+                <Condition Lhs="falling" Op="Equal" Rhs="0" />
+              </Conjunction>
+            </Conditions>
+            <Priority xsi:nil="true" />
+          </Transition>
+          <Transition From="Sprint" To="Idle" TimeInSec="0.4" Sync="Restart" Curve="EaseIn">
+            <Conditions>
+              <Conjunction>
+                <Condition Lhs="speed" Op="Less" Rhs="7" />
+              </Conjunction>
+              <Conjunction>
+                <Condition Lhs="falling" Op="Equal" Rhs="1" />
+              </Conjunction>
+              <Conjunction>
+                <Condition Lhs="flying" Op="Equal" Rhs="1" />
+              </Conjunction>
+            </Conditions>
+            <Priority xsi:nil="true" />
+          </Transition>
+          <Transition Name="equip_right_tool" From="Any" To="Equip" TimeInSec="0" Sync="Restart" Curve="Smooth">
+            <Priority>1</Priority>
+          </Transition>
+          <Transition Name="ConcreteTool" From="Equip" To="Equipped" TimeInSec="0.2" Sync="Restart" Curve="Smooth">
+            <Priority xsi:nil="true" />
+          </Transition>
+          <Transition From="Equip" To="Nothing" TimeInSec="0" Sync="Restart" Curve="Smooth">
+            <Priority xsi:nil="true" />
+          </Transition>
+          <Transition From="Equipped" To="Idle" TimeInSec="0.35" Sync="Restart" Curve="Smooth">
+            <Priority xsi:nil="true" />
+          </Transition>
+        </Transitions>
+      </StateMachine>
+      <StateMachine>
+        <Name>ConcreteTool_SMRightHand</Name>
+        <Nodes>
+          <Node>
+            <Name>State1</Name>
+            <EdPos>
+              <X>-466</X>
+              <Y>-54</Y>
+            </EdPos>
+            <Type>AnyExceptTarget</Type>
+            <Variables />
+          </Node>
+          <Node>
+            <Name>Equipped</Name>
+            <AnimationTree>
+              <EdPos>
+                <X>32</X>
+                <Y>4</Y>
+              </EdPos>
+              <Child xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                <EdPos>
+                  <X>319</X>
+                  <Y>3</Y>
+                </EdPos>
+                <Loop>true</Loop>
+                <Speed>1</Speed>
+                <Interpolate>true</Interpolate>
+              </Child>
+            </AnimationTree>
+            <EdPos>
+              <X>-197</X>
+              <Y>0</Y>
+            </EdPos>
+            <Type>Normal</Type>
+            <Variables />
+          </Node>
+          <Node>
+            <Name>AnyToolRight</Name>
+            <EdPos>
+              <X>-467</X>
+              <Y>-118</Y>
+            </EdPos>
+            <Type>AnyExceptTarget</Type>
+            <Variables />
+          </Node>
+          <Node>
+            <Name>Nothing</Name>
+            <AnimationTree>
+              <EdPos>
+                <X>-1390</X>
+                <Y>123</Y>
+              </EdPos>
+              <Child xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                <EdPos>
+                  <X>-1072</X>
+                  <Y>1</Y>
+                </EdPos>
+                <Loop>true</Loop>
+                <Speed>1</Speed>
+                <Interpolate>true</Interpolate>
+              </Child>
+              <Orphans />
+            </AnimationTree>
+            <EdPos>
+              <X>-198</X>
+              <Y>-137</Y>
+            </EdPos>
+            <Type>PassThrough</Type>
+            <Variables />
+          </Node>
+          <Node>
+            <Name>RifleGunIdle</Name>
+            <AnimationTree>
+              <EdPos>
+                <X>-3018</X>
+                <Y>254</Y>
+              </EdPos>
+              <Child xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                <EdPos>
+                  <X>-2433</X>
+                  <Y>369</Y>
+                </EdPos>
+                <ParameterName>firstperson</ParameterName>
+                <Circular>false</Circular>
+                <Sensitivity>1</Sensitivity>
+                <MaxChange xsi:nil="true" />
+                <Child>
+                  <Param>0</Param>
+                  <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                    <EdPos>
+                      <X>-1030</X>
+                      <Y>-861</Y>
+                    </EdPos>
+                    <ParameterName>lean</ParameterName>
+                    <Circular>false</Circular>
+                    <Sensitivity>0.2</Sensitivity>
+                    <MaxChange xsi:nil="true" />
+                    <Child>
+                      <Param>-36</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                        <EdPos>
+                          <X>-78</X>
+                          <Y>-1127</Y>
+                        </EdPos>
+                        <ParameterName>ironsight</ParameterName>
+                        <Circular>false</Circular>
+                        <Sensitivity>1</Sensitivity>
+                        <MaxChange xsi:nil="true" />
+                        <Child>
+                          <Param>0</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>886</X>
+                              <Y>-1223</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_aim_down.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>1</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>892</X>
+                              <Y>-954</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_aim_down.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                      </Node>
+                    </Child>
+                    <Child>
+                      <Param>0</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                        <EdPos>
+                          <X>-102</X>
+                          <Y>-649</Y>
+                        </EdPos>
+                        <ParameterName>ironsight</ParameterName>
+                        <Circular>false</Circular>
+                        <Sensitivity>1</Sensitivity>
+                        <MaxChange xsi:nil="true" />
+                        <Child>
+                          <Param>0</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>888</X>
+                              <Y>-679</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_aim_straight.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>1</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>879</X>
+                              <Y>-417</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_aim_straight.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                      </Node>
+                    </Child>
+                    <Child>
+                      <Param>22</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                        <EdPos>
+                          <X>-97</X>
+                          <Y>-248</Y>
+                        </EdPos>
+                        <ParameterName>ironsight</ParameterName>
+                        <Circular>false</Circular>
+                        <Sensitivity>1</Sensitivity>
+                        <MaxChange xsi:nil="true" />
+                        <Child>
+                          <Param>0</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>906</X>
+                              <Y>-149</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_aim_up.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>1</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>898</X>
+                              <Y>150</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_aim_up.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                      </Node>
+                    </Child>
+                  </Node>
+                </Child>
+                <Child>
+                  <Param>1</Param>
+                  <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                    <EdPos>
+                      <X>-992</X>
+                      <Y>1458</Y>
+                    </EdPos>
+                    <ParameterName>crouch</ParameterName>
+                    <Circular>false</Circular>
+                    <Sensitivity>0.08</Sensitivity>
+                    <MaxChange xsi:nil="true" />
+                    <Child>
+                      <Param>0</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                        <EdPos>
+                          <X>-67</X>
+                          <Y>793</Y>
+                        </EdPos>
+                        <ParameterName>lean</ParameterName>
+                        <Circular>false</Circular>
+                        <Sensitivity>0.199999988</Sensitivity>
+                        <MaxChange xsi:nil="true" />
+                        <Child>
+                          <Param>-36</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>870</X>
+                              <Y>591</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_aim_down.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>0</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>877</X>
+                              <Y>855</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_aim_straight.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>15</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>882</X>
+                              <Y>1115</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_aim_up.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>50</Param>
+                        </Child>
+                      </Node>
+                    </Child>
+                    <Child>
+                      <Param>1</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                        <EdPos>
+                          <X>170</X>
+                          <Y>2244</Y>
+                        </EdPos>
+                        <ParameterName>lean</ParameterName>
+                        <Circular>false</Circular>
+                        <Sensitivity>0.38</Sensitivity>
+                        <MaxChange xsi:nil="true" />
+                        <Child>
+                          <Param>-36</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>886</X>
+                              <Y>1782</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_downmore.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>-18</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>909</X>
+                              <Y>2127</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_down.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>0</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>909</X>
+                              <Y>2440</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_straight.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>18</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>920</X>
+                              <Y>2715</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_up.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>40</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>917</X>
+                              <Y>2961</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_upmore.mwm</PathToModel>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                      </Node>
+                    </Child>
+                  </Node>
+                </Child>
+              </Child>
+              <Orphans>
+                <MyAbstractXmlSerializerOfMyObjectBuilder_AnimationTreeNode xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                  <EdPos>
+                    <X>892</X>
+                    <Y>1367</Y>
+                  </EdPos>
+                  <PathToModel>Models\Characters\Animations\Female\rifle_first_aim_upmore.mwm</PathToModel>
+                  <Loop>true</Loop>
+                  <Speed>1</Speed>
+                  <Interpolate>true</Interpolate>
+                </MyAbstractXmlSerializerOfMyObjectBuilder_AnimationTreeNode>
+              </Orphans>
+            </AnimationTree>
+            <EdPos>
+              <X>9</X>
+              <Y>1</Y>
+            </EdPos>
+            <Type>Normal</Type>
+            <Variables />
+          </Node>
+          <Node>
+            <Name>RifleGunIdle_Falling</Name>
+            <AnimationTree>
+              <EdPos>
+                <X>-3018</X>
+                <Y>254</Y>
+              </EdPos>
+              <Child xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                <EdPos>
+                  <X>-2544</X>
+                  <Y>174</Y>
+                </EdPos>
+                <ParameterName>firstperson</ParameterName>
+                <Circular>false</Circular>
+                <Sensitivity>1</Sensitivity>
+                <MaxChange xsi:nil="true" />
+                <Child>
+                  <Param>0</Param>
+                  <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                    <EdPos>
+                      <X>-1141</X>
+                      <Y>-1055</Y>
+                    </EdPos>
+                    <ParameterName>lean</ParameterName>
+                    <Circular>false</Circular>
+                    <Sensitivity>0.2</Sensitivity>
+                    <MaxChange xsi:nil="true" />
+                    <Child>
+                      <Param>-36</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                        <EdPos>
+                          <X>-750</X>
+                          <Y>-1238</Y>
+                        </EdPos>
+                        <PathToModel>Models\Characters\Animations\Female\rifle_aim_down.mwm</PathToModel>
+                        <AnimationName>AnimStack::Astronaut_character_3rd_rifle_aim_down_v003</AnimationName>
+                        <Loop>true</Loop>
+                        <Speed>1</Speed>
+                        <Interpolate>true</Interpolate>
+                      </Node>
+                    </Child>
+                    <Child>
+                      <Param>0</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                        <EdPos>
+                          <X>-733</X>
+                          <Y>-970</Y>
+                        </EdPos>
+                        <PathToModel>Models\Characters\Animations\Female\rifle_aim_straight.mwm</PathToModel>
+                        <AnimationName>AnimStack::Take 001</AnimationName>
+                        <Loop>true</Loop>
+                        <Speed>1</Speed>
+                        <Interpolate>true</Interpolate>
+                      </Node>
+                    </Child>
+                    <Child>
+                      <Param>22</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                        <EdPos>
+                          <X>-714</X>
+                          <Y>-716</Y>
+                        </EdPos>
+                        <PathToModel>Models\Characters\Animations\Female\rifle_aim_up.mwm</PathToModel>
+                        <AnimationName>AnimStack::Astronaut_character_3rd_rifle_aim_up_v004</AnimationName>
+                        <Loop>true</Loop>
+                        <Speed>1</Speed>
+                        <Interpolate>true</Interpolate>
+                      </Node>
+                    </Child>
+                  </Node>
+                </Child>
+                <Child>
+                  <Param>1</Param>
+                  <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                    <EdPos>
+                      <X>-1103</X>
+                      <Y>1263</Y>
+                    </EdPos>
+                    <ParameterName>crouch</ParameterName>
+                    <Circular>false</Circular>
+                    <Sensitivity>0.08</Sensitivity>
+                    <MaxChange xsi:nil="true" />
+                    <Child>
+                      <Param>0</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                        <EdPos>
+                          <X>-178</X>
+                          <Y>598</Y>
+                        </EdPos>
+                        <ParameterName>lean</ParameterName>
+                        <Circular>false</Circular>
+                        <Sensitivity>0.2</Sensitivity>
+                        <MaxChange xsi:nil="true" />
+                        <Child>
+                          <Param>-36</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>758</X>
+                              <Y>396</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_aim_down.mwm</PathToModel>
+                            <AnimationName>AnimStack::Astronaut_character_1st_rifle_aim_down_v002</AnimationName>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>0</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>765</X>
+                              <Y>660</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_aim_straight_WhileFalling.mwm</PathToModel>
+                            <AnimationName>AnimStack::Take 001</AnimationName>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>18</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>770</X>
+                              <Y>920</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_aim_up_WhileFalling.mwm</PathToModel>
+                            <AnimationName>AnimStack::Take 001</AnimationName>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>40</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>713</X>
+                              <Y>1170</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_aim_upmore_WhileFalling.mwm</PathToModel>
+                            <AnimationName>AnimStack::Astronaut_character_1st_rifle_aim_upmore_v001</AnimationName>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                      </Node>
+                    </Child>
+                    <Child>
+                      <Param>1</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                        <EdPos>
+                          <X>58</X>
+                          <Y>2049</Y>
+                        </EdPos>
+                        <ParameterName>lean</ParameterName>
+                        <Circular>false</Circular>
+                        <Sensitivity>0.38</Sensitivity>
+                        <MaxChange xsi:nil="true" />
+                        <Child>
+                          <Param>-36</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>774</X>
+                              <Y>1587</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_downmore.mwm</PathToModel>
+                            <AnimationName>AnimStack::Astronaut_character_1st_rifle_crouch_aim_downmore_v002</AnimationName>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>-18</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>797</X>
+                              <Y>1932</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_down.mwm</PathToModel>
+                            <AnimationName>AnimStack::Astronaut_character_1st_rifle_crouch_aim_down_v001</AnimationName>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>0</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>1302</X>
+                              <Y>2236</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_straight_WhileFalling.mwm</PathToModel>
+                            <AnimationName>AnimStack::Astronaut_character_1st_rifle_crouch_aim_straight_v002</AnimationName>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>18</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>1313</X>
+                              <Y>2511</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_up_WhileFalling.mwm</PathToModel>
+                            <AnimationName>AnimStack::Astronaut_character_1st_rifle_crouch_aim_up_v001</AnimationName>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                        <Child>
+                          <Param>40</Param>
+                          <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                            <EdPos>
+                              <X>1310</X>
+                              <Y>2757</Y>
+                            </EdPos>
+                            <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_upmore_WhileFalling.mwm</PathToModel>
+                            <AnimationName>AnimStack::Astronaut_character_1st_rifle_crouch_aim_upmore_v002</AnimationName>
+                            <Loop>true</Loop>
+                            <Speed>1</Speed>
+                            <Interpolate>true</Interpolate>
+                          </Node>
+                        </Child>
+                      </Node>
+                    </Child>
+                  </Node>
+                </Child>
+              </Child>
+              <Orphans>
+                <MyAbstractXmlSerializerOfMyObjectBuilder_AnimationTreeNode xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                  <EdPos>
+                    <X>1246</X>
+                    <Y>1145</Y>
+                  </EdPos>
+                  <PathToModel>Models\Characters\Animations\Female\rifle_first_aim_upmore.mwm</PathToModel>
+                  <AnimationName>AnimStack::Astronaut_character_1st_rifle_aim_upmore_v001</AnimationName>
+                  <Loop>true</Loop>
+                  <Speed>1</Speed>
+                  <Interpolate>true</Interpolate>
+                </MyAbstractXmlSerializerOfMyObjectBuilder_AnimationTreeNode>
+                <MyAbstractXmlSerializerOfMyObjectBuilder_AnimationTreeNode xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                  <EdPos>
+                    <X>797</X>
+                    <Y>2245</Y>
+                  </EdPos>
+                  <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_straight.mwm</PathToModel>
+                  <AnimationName>AnimStack::Astronaut_character_1st_rifle_crouch_aim_straight_v002</AnimationName>
+                  <Loop>true</Loop>
+                  <Speed>1</Speed>
+                  <Interpolate>true</Interpolate>
+                </MyAbstractXmlSerializerOfMyObjectBuilder_AnimationTreeNode>
+                <MyAbstractXmlSerializerOfMyObjectBuilder_AnimationTreeNode xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                  <EdPos>
+                    <X>808</X>
+                    <Y>2520</Y>
+                  </EdPos>
+                  <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_up.mwm</PathToModel>
+                  <AnimationName>AnimStack::Astronaut_character_1st_rifle_crouch_aim_up_v001</AnimationName>
+                  <Loop>true</Loop>
+                  <Speed>1</Speed>
+                  <Interpolate>true</Interpolate>
+                </MyAbstractXmlSerializerOfMyObjectBuilder_AnimationTreeNode>
+                <MyAbstractXmlSerializerOfMyObjectBuilder_AnimationTreeNode xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                  <EdPos>
+                    <X>805</X>
+                    <Y>2766</Y>
+                  </EdPos>
+                  <PathToModel>Models\Characters\Animations\Female\rifle_first_crouch_aim_upmore.mwm</PathToModel>
+                  <AnimationName>AnimStack::Astronaut_character_1st_rifle_crouch_aim_upmore_v001</AnimationName>
+                  <Loop>true</Loop>
+                  <Speed>1</Speed>
+                  <Interpolate>true</Interpolate>
+                </MyAbstractXmlSerializerOfMyObjectBuilder_AnimationTreeNode>
+              </Orphans>
+            </AnimationTree>
+            <EdPos>
+              <X>-11</X>
+              <Y>137</Y>
+            </EdPos>
+            <Type>Normal</Type>
+            <Variables />
+          </Node>
+          <Node>
+            <Name>RifleGunRunForward</Name>
+            <AnimationTree>
+              <EdPos>
+                <X>-817</X>
+                <Y>-155</Y>
+              </EdPos>
+              <Child xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                <EdPos>
+                  <X>-256</X>
+                  <Y>-254</Y>
+                </EdPos>
+                <ParameterName>shooting</ParameterName>
+                <Circular>false</Circular>
+                <Sensitivity>0.199999988</Sensitivity>
+                <MaxChange xsi:nil="true" />
+                <Child>
+                  <Param>0</Param>
+                  <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                    <EdPos>
+                      <X>420</X>
+                      <Y>-487</Y>
+                    </EdPos>
+                    <ParameterName>firstperson</ParameterName>
+                    <Circular>false</Circular>
+                    <Sensitivity>0.199999988</Sensitivity>
+                    <MaxChange xsi:nil="true" />
+                    <Child>
+                      <Param>0</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                        <EdPos>
+                          <X>1108</X>
+                          <Y>-562</Y>
+                        </EdPos>
+                        <PathToModel>Models\Characters\Animations\Female\rifle_sprint.mwm</PathToModel>
+                        <AnimationName>AnimStack::Astronaut_character_rifle_run</AnimationName>
+                        <Loop>true</Loop>
+                        <Speed>1</Speed>
+                        <Interpolate>true</Interpolate>
+                        <SynchronizeWithLayer>Body</SynchronizeWithLayer>
+                      </Node>
+                    </Child>
+                    <Child>
+                      <Param>1</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                        <EdPos>
+                          <X>1080</X>
+                          <Y>-212</Y>
+                        </EdPos>
+                        <PathToModel>Models\Characters\Animations\Female\first_rifle_sprint.mwm</PathToModel>
+                        <AnimationName>AnimStack::Astronaut_character_1st_rifle_run</AnimationName>
+                        <Loop>true</Loop>
+                        <Speed>1</Speed>
+                        <Interpolate>true</Interpolate>
+                        <SynchronizeWithLayer>Body</SynchronizeWithLayer>
+                      </Node>
+                    </Child>
+                  </Node>
+                </Child>
+                <Child>
+                  <Param>1</Param>
+                  <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                    <EdPos>
+                      <X>586</X>
+                      <Y>247</Y>
+                    </EdPos>
+                    <ParameterName>lean</ParameterName>
+                    <Circular>false</Circular>
+                    <Sensitivity>0.2</Sensitivity>
+                    <MaxChange xsi:nil="true" />
+                    <Child>
+                      <Param>-36</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                        <EdPos>
+                          <X>1081</X>
+                          <Y>92</Y>
+                        </EdPos>
+                        <PathToModel>Models\Characters\Animations\Female\rifle_aim_down.mwm</PathToModel>
+                        <AnimationName>AnimStack::Astronaut_character_3rd_rifle_aim_down_v003</AnimationName>
+                        <Loop>true</Loop>
+                        <Speed>1</Speed>
+                        <Interpolate>true</Interpolate>
+                      </Node>
+                    </Child>
+                    <Child>
+                      <Param>0</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                        <EdPos>
+                          <X>1088</X>
+                          <Y>356</Y>
+                        </EdPos>
+                        <PathToModel>Models\Characters\Animations\Female\rifle_aim_straight.mwm</PathToModel>
+                        <AnimationName>AnimStack::Astronaut_character_3rd_rifle_aim_straight_v004</AnimationName>
+                        <Loop>true</Loop>
+                        <Speed>1</Speed>
+                        <Interpolate>true</Interpolate>
+                      </Node>
+                    </Child>
+                    <Child>
+                      <Param>22</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                        <EdPos>
+                          <X>1092</X>
+                          <Y>607</Y>
+                        </EdPos>
+                        <PathToModel>Models\Characters\Animations\Female\rifle_aim_up.mwm</PathToModel>
+                        <AnimationName>AnimStack::Astronaut_character_3rd_rifle_aim_up_v004</AnimationName>
+                        <Loop>true</Loop>
+                        <Speed>1</Speed>
+                        <Interpolate>true</Interpolate>
+                      </Node>
+                    </Child>
+                  </Node>
+                </Child>
+              </Child>
+            </AnimationTree>
+            <EdPos>
+              <X>178</X>
+              <Y>-3</Y>
+            </EdPos>
+            <Type>Normal</Type>
+            <Variables />
+          </Node>
+        </Nodes>
+        <Transitions>
+          <Transition Name="equip_right_tool" From="AnyToolRight" To="Nothing" TimeInSec="0" Sync="Restart" Curve="Smooth">
+            <Priority xsi:nil="true" />
+          </Transition>
+          <Transition Name="unequip_right_tool" From="State1" To="Nothing" TimeInSec="0" Sync="Restart" Curve="Smooth">
+            <Priority xsi:nil="true" />
+          </Transition>
+          <Transition From="RifleGunIdle" To="RifleGunRunForward" TimeInSec="0.5" Sync="Restart" Curve="Smooth">
+            <Conditions>
+              <Conjunction>
+                <Condition Lhs="speed_z" Op="Greater" Rhs="speed_ut" />
+                <Condition Lhs="flying" Op="Equal" Rhs="0" />
+                <Condition Lhs="jumping" Op="Equal" Rhs="0" />
+                <Condition Lhs="falling" Op="Equal" Rhs="0" />
+              </Conjunction>
+            </Conditions>
+            <Priority xsi:nil="true" />
+          </Transition>
+          <Transition From="RifleGunRunForward" To="RifleGunIdle" TimeInSec="0.2" Sync="Restart" Curve="Smooth">
+            <Conditions>
+              <Conjunction>
+                <Condition Lhs="speed" Op="Less" Rhs="speed_ut" />
+              </Conjunction>
+              <Conjunction>
+                <Condition Lhs="flying" Op="Equal" Rhs="1" />
+              </Conjunction>
+            </Conditions>
+            <Priority xsi:nil="true" />
+          </Transition>
+          <Transition From="RifleGunIdle" To="RifleGunIdle_Falling" TimeInSec="0.1" Sync="Restart" Curve="Smooth">
+            <Conditions>
+              <Conjunction>
+                <Condition Lhs="falling" Op="Equal" Rhs="1" />
+              </Conjunction>
+              <Conjunction>
+                <Condition Lhs="jumping" Op="Equal" Rhs="1" />
+              </Conjunction>
+            </Conditions>
+            <Priority xsi:nil="true" />
+          </Transition>
+          <Transition From="RifleGunIdle_Falling" To="RifleGunIdle" TimeInSec="0.1" Sync="Restart" Curve="Smooth">
+            <Conditions>
+              <Conjunction>
+                <Condition Lhs="falling" Op="Equal" Rhs="0" />
+                <Condition Lhs="jumping" Op="Equal" Rhs="0" />
+              </Conjunction>
+            </Conditions>
+            <Priority xsi:nil="true" />
+          </Transition>
+          <Transition From="RifleGunRunForward" To="RifleGunIdle_Falling" TimeInSec="0.1" Sync="Restart" Curve="Smooth">
+            <Conditions>
+              <Conjunction>
+                <Condition Lhs="falling" Op="Equal" Rhs="1" />
+              </Conjunction>
+              <Conjunction>
+                <Condition Lhs="jumping" Op="Equal" Rhs="1" />
+              </Conjunction>
+            </Conditions>
+            <Priority xsi:nil="true" />
+          </Transition>
+          <Transition From="Equipped" To="RifleGunIdle" TimeInSec="0.5" Sync="Restart" Curve="EaseIn">
+            <Priority xsi:nil="true" />
+          </Transition>
+          <Transition Name="OFF___ConcreteTool" From="Nothing" To="Equipped" TimeInSec="0" Sync="Restart" Curve="Smooth">
+            <Priority xsi:nil="true" />
+          </Transition>
+        </Transitions>
+      </StateMachine>
+      <StateMachine>
+        <Name>ConcreteTool_SMHip</Name>
+        <Nodes>
+          <Node>
+            <Name>Equip</Name>
+            <AnimationTree>
+              <EdPos>
+                <X>0</X>
+                <Y>0</Y>
+              </EdPos>
+              <Child xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                <EdPos>
+                  <X>256</X>
+                  <Y>0</Y>
+                </EdPos>
+                <Loop>true</Loop>
+                <Speed>1</Speed>
+                <Interpolate>true</Interpolate>
+              </Child>
+            </AnimationTree>
+            <EdPos>
+              <X>-1052</X>
+              <Y>-232</Y>
+            </EdPos>
+            <Type>PassThrough</Type>
+            <Variables />
+          </Node>
+          <Node>
+            <Name>Equipped</Name>
+            <AnimationTree>
+              <EdPos>
+                <X>0</X>
+                <Y>0</Y>
+              </EdPos>
+              <Child xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                <EdPos>
+                  <X>224</X>
+                  <Y>0</Y>
+                </EdPos>
+                <Loop>true</Loop>
+                <Speed>1</Speed>
+                <Interpolate>true</Interpolate>
+              </Child>
+            </AnimationTree>
+            <EdPos>
+              <X>-814</X>
+              <Y>-234</Y>
+            </EdPos>
+            <Type>Normal</Type>
+            <Variables />
+          </Node>
+          <Node>
+            <Name>Any</Name>
+            <AnimationTree>
+              <EdPos>
+                <X>-139</X>
+                <Y>-2</Y>
+              </EdPos>
+              <Orphans />
+            </AnimationTree>
+            <EdPos>
+              <X>-1314</X>
+              <Y>-137</Y>
+            </EdPos>
+            <Type>AnyExceptTarget</Type>
+            <Variables />
+          </Node>
+          <Node>
+            <Name>Nothing</Name>
+            <AnimationTree>
+              <EdPos>
+                <X>-204</X>
+                <Y>-6</Y>
+              </EdPos>
+              <Child xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                <EdPos>
+                  <X>122</X>
+                  <Y>11</Y>
+                </EdPos>
+                <Loop>true</Loop>
+                <Speed>1</Speed>
+                <Interpolate>true</Interpolate>
+              </Child>
+            </AnimationTree>
+            <EdPos>
+              <X>-1055</X>
+              <Y>-125</Y>
+            </EdPos>
+            <Type>Normal</Type>
+            <Variables />
+          </Node>
+          <Node>
+            <Name>RotateHipRifle</Name>
+            <AnimationTree>
+              <EdPos>
+                <X>-88</X>
+                <Y>12</Y>
+              </EdPos>
+              <Child xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                <EdPos>
+                  <X>211</X>
+                  <Y>6</Y>
+                </EdPos>
+                <ParameterName>firstperson</ParameterName>
+                <Circular>false</Circular>
+                <Sensitivity>1</Sensitivity>
+                <MaxChange xsi:nil="true" />
+                <Child>
+                  <Param>0</Param>
+                  <Node xsi:type="MyObjectBuilder_AnimationTreeNodeMix1D">
+                    <EdPos>
+                      <X>725</X>
+                      <Y>-103</Y>
+                    </EdPos>
+                    <ParameterName>crouch</ParameterName>
+                    <Circular>false</Circular>
+                    <Sensitivity>0.25</Sensitivity>
+                    <MaxChange xsi:nil="true" />
+                    <Child>
+                      <Param>0</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                        <EdPos>
+                          <X>1110</X>
+                          <Y>-190</Y>
+                        </EdPos>
+                        <PathToModel>Models\Characters\Animations\Female\rifle_hip.mwm</PathToModel>
+                        <Loop>true</Loop>
+                        <Speed>1</Speed>
+                        <Interpolate>true</Interpolate>
+                      </Node>
+                    </Child>
+                    <Child>
+                      <Param>1</Param>
+                      <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                        <EdPos>
+                          <X>1125</X>
+                          <Y>200</Y>
+                        </EdPos>
+                        <PathToModel>Models\Characters\Animations\Female\rifle_hip_crouch.mwm</PathToModel>
+                        <Loop>true</Loop>
+                        <Speed>1</Speed>
+                        <Interpolate>true</Interpolate>
+                      </Node>
+                    </Child>
+                  </Node>
+                </Child>
+                <Child>
+                  <Param>1</Param>
+                  <Node xsi:type="MyObjectBuilder_AnimationTreeNodeTrack">
+                    <EdPos>
+                      <X>699</X>
+                      <Y>397</Y>
+                    </EdPos>
+                    <PathToModel>Models\Characters\Animations\Female\rifle_first_hip.mwm</PathToModel>
+                    <Loop>true</Loop>
+                    <Speed>1</Speed>
+                    <Interpolate>true</Interpolate>
+                  </Node>
+                </Child>
+              </Child>
+            </AnimationTree>
+            <EdPos>
+              <X>-825</X>
+              <Y>-111</Y>
+            </EdPos>
+            <Type>Normal</Type>
+            <Variables />
+          </Node>
+        </Nodes>
+        <Transitions>
+          <Transition Name="unequip_right_tool" From="Any" To="Nothing" TimeInSec="0.1" Sync="Restart" Curve="Smooth">
+            <Priority xsi:nil="true" />
+          </Transition>
+          <Transition Name="equip_right_tool" From="Any" To="Equip" TimeInSec="0" Sync="Restart" Curve="Smooth">
+            <Priority>1</Priority>
+          </Transition>
+          <Transition Name="OFF___ConcreteTool" From="Equip" To="Equipped" TimeInSec="0.2" Sync="Restart" Curve="Smooth">
+            <Priority xsi:nil="true" />
+          </Transition>
+          <Transition From="Equip" To="Nothing" TimeInSec="0" Sync="Restart" Curve="Smooth">
+            <Priority xsi:nil="true" />
+          </Transition>
+          <Transition From="Equipped" To="RotateHipRifle" TimeInSec="0" Sync="Restart" Curve="Smooth">
+            <Priority xsi:nil="true" />
+          </Transition>
+        </Transitions>
+      </StateMachine>
+    </StateMachines>
+    <FootIkChains>
+      <FootIkChain>
+        <FootBone>SE_RigLFoot</FootBone>
+        <ChainLength>2</ChainLength>
+        <AlignBoneWithTerrain>true</AlignBoneWithTerrain>
+      </FootIkChain>
+      <FootIkChain>
+        <FootBone>SE_RigRFoot</FootBone>
+        <ChainLength>2</ChainLength>
+        <AlignBoneWithTerrain>true</AlignBoneWithTerrain>
+      </FootIkChain>
+    </FootIkChains>
+    <IkIgnoredBones>
+      <Bone>HeadDummy</Bone>
+      <Bone>ThirdCameraDummy</Bone>
+    </IkIgnoredBones>
+  </Definition>
+</Definitions>
