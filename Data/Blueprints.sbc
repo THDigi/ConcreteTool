@@ -31,8 +31,12 @@
     </Blueprint>
   </Blueprints>
   <BlueprintClassEntries>
+    <Entry Class="BasicTools" BlueprintSubtypeId="Blueprint_ConcreteTool" />
     <Entry Class="Tools" BlueprintSubtypeId="Blueprint_ConcreteTool" />
+    <Entry Class="EliteTools" BlueprintSubtypeId="Blueprint_ConcreteTool" />
+
     <Entry Class="Components" BlueprintSubtypeId="Blueprint_ConcreteMix" />
-    <Entry Class="Ammo" BlueprintSubtypeId="Blueprint_ConcreteMix" />
+    <Entry Class="SimpleComponents" BlueprintSubtypeId="Blueprint_ConcreteMix" />
+    <Entry Class="BasicComponents" BlueprintSubtypeId="Blueprint_ConcreteMix" />
   </BlueprintClassEntries>
 </Definitions>
