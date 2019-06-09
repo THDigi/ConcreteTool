@@ -29,6 +29,8 @@ namespace Digi.ConcreteTool
         internal bool init = false;
         internal bool isThisDedicated = false;
 
+        private bool IgnoreAmmoConsumption => (MyAPIGateway.Session.CreativeMode || MyAPIGateway.Session.SessionSettings.InfiniteAmmo);
+
         public readonly Networking Network = new Networking(63311);
         public readonly ChatCommands ChatCommands = new ChatCommands();
 
@@ -172,20 +174,30 @@ namespace Digi.ConcreteTool
 
                 if(add || type == VoxelActionEnum.PAINT_VOXEL)
                 {
-                    var inv = character.GetInventory(0);
-                    var use = Utils.GetAmmoUsage(type, scale);
+                    bool doAction = true;
 
-                    if(inv.GetItemAmount(CONCRETE_MAG_DEFID) >= use)
+                    if(!IgnoreAmmoConsumption)
+                    {
+                        doAction = false;
+                        var inv = character.GetInventory(0);
+                        var useItems = Utils.GetAmmoUsage(type, scale);
+
+                        if(inv.GetItemAmount(CONCRETE_MAG_DEFID) >= useItems)
+                        {
+                            inv.RemoveItemsOfType(useItems, CONCRETE_MAG, false);
+                            doAction = true;
+                        }
+                        else
+                            Log.Error($"Not enough ammo ({useItems}) for {type} on {character.DisplayName} ({character.EntityId})");
+                    }
+
+                    if(doAction)
                     {
                         if(add)
                             MyAPIGateway.Session.VoxelMaps.FillInShape(voxelEnt, shape, material.Index);
                         else
                             MyAPIGateway.Session.VoxelMaps.PaintInShape(voxelEnt, shape, material.Index);
-
-                        inv.RemoveItemsOfType(use, CONCRETE_MAG, false);
                     }
-                    else
-                        Log.Error($"Not enough ammo ({use}) for {type} on {character.DisplayName} ({character.EntityId})");
                 }
                 else if(type == VoxelActionEnum.REMOVE_VOXEL)
                 {
@@ -402,7 +414,7 @@ namespace Digi.ConcreteTool
                     selectedVoxelMapTicks = HIGHLIGHT_VOXELMAP_MAXTICKS;
                 }
 
-                ToolProcess(selectedVoxelMap, target, view, trigger, paint);
+                ToolProcess(character, selectedVoxelMap, target, view, trigger, paint);
             }
         }
 
@@ -454,13 +466,13 @@ namespace Digi.ConcreteTool
             snapStatus.Show();
         }
 
-        private bool ToolProcess(IMyVoxelBase voxelEnt, Vector3D target, MatrixD view, bool primaryAction, bool paintAction)
+        private bool ToolProcess(IMyCharacter character, IMyVoxelBase voxelEnt, Vector3D target, MatrixD view, bool primaryAction, bool paintAction)
         {
             placeMatrix.Translation = target;
 
             var planet = voxelEnt as MyPlanet;
 
-            bool inputReadable = InputHandler.IsInputReadable();
+            bool inputReadable = (InputHandler.IsInputReadable() && MyAPIGateway.Session.ControlledObject == character);
             bool invalidPlacement = false;
             bool removeMode = false;
             bool shift = false;
@@ -932,10 +944,9 @@ namespace Digi.ConcreteTool
                 return false;
 
             #region Ammo check
-            if((primaryAction && !removeMode) || paintAction)
+            if(!IgnoreAmmoConsumption && ((primaryAction && !removeMode) || paintAction))
             {
-                var character = MyAPIGateway.Session.Player.Character;
-                var inv = character.GetInventory();
+                var inv = character.GetInventory(0);
                 var type = (paintAction ? VoxelActionEnum.PAINT_VOXEL : (removeMode ? VoxelActionEnum.REMOVE_VOXEL : VoxelActionEnum.ADD_VOXEL));
 
                 if(inv.GetItemAmount(CONCRETE_MAG_DEFID) < Utils.GetAmmoUsage(type, placeScale))
