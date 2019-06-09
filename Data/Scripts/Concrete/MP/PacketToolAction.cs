@@ -8,16 +8,16 @@ namespace Digi.ConcreteTool.MP
     [ProtoContract]
     public class PacketToolAction : PacketBase
     {
-        [ProtoMember]
+        [ProtoMember(1)]
         private readonly VoxelActionEnum ActionType;
 
-        [ProtoMember]
+        [ProtoMember(2)]
         private readonly long CharEntId;
 
-        [ProtoMember]
+        [ProtoMember(3)]
         private readonly float Scale;
 
-        [ProtoMember]
+        [ProtoMember(4)]
         private readonly Vector3D Origin;
 
         public PacketToolAction() { } // Empty constructor required for deserialization

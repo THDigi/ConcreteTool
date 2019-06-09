@@ -9,22 +9,22 @@ namespace Digi.ConcreteTool.MP
     [ProtoContract]
     public class PacketVoxelAction : PacketBase
     {
-        [ProtoMember]
+        [ProtoMember(1)]
         private readonly VoxelActionEnum ActionType;
 
-        [ProtoMember]
+        [ProtoMember(2)]
         private readonly long VoxelEntId;
 
-        [ProtoMember]
+        [ProtoMember(3)]
         private readonly float Scale;
 
-        [ProtoMember]
+        [ProtoMember(4)]
         private readonly Vector3D Origin;
 
-        [ProtoMember]
+        [ProtoMember(5)]
         private readonly Quaternion Orientation;
 
-        [ProtoMember]
+        [ProtoMember(6)]
         private readonly long CharEntId;
 
         public PacketVoxelAction() { } // Empty constructor required for deserialization
@@ -54,7 +54,7 @@ namespace Digi.ConcreteTool.MP
 
             var shape = MyAPIGateway.Session.VoxelMaps.GetBoxVoxelHand();
 
-            var vec = (Vector3D.One / 2) * Scale;
+            var vec = new Vector3D(Scale * 0.5);
             shape.Boundaries = new BoundingBoxD(-vec, vec);
 
             var m = MatrixD.CreateFromQuaternion(Orientation);
