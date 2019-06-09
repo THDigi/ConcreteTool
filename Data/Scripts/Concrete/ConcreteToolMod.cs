@@ -114,7 +114,7 @@ namespace Digi.ConcreteTool
         private const BlendTypeEnum BLEND_TYPE = BlendTypeEnum.SDR;
 
         public const float CONCRETE_PLACE_USE = 1f;
-        public const float CONCRETE_PAINT_USE = 0.5f;
+        public const float CONCRETE_PAINT_USE = 0.25f;
         private const int REMOVE_TARGET_TICKS = 20;
         private const int RECENT_ACTION_TICKS = 10;
 
@@ -958,7 +958,7 @@ namespace Digi.ConcreteTool
                 if(useItems > 0 && character.GetInventory(0).GetItemAmount(CONCRETE_MAG_DEFID) < useItems)
                 {
                     Utils.PlayLocalSound(SOUND_HUD_UNABLE, SOUND_HUD_UNABLE_VOLUME, SOUND_HUD_UNABLE_TIMEOUT);
-                    SetToolStatus("You need Concrete Mix to use this tool!", 1500, MyFontEnum.Red);
+                    SetToolStatus($"{useItems.ToString()}x [Concrete Mix] needed!", 1500, MyFontEnum.Red);
                     return false;
                 }
             }

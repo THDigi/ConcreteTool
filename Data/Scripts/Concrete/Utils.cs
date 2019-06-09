@@ -17,13 +17,12 @@ namespace Digi.ConcreteTool
     {
         public static MyFixedPoint GetAmmoUsage(VoxelActionEnum type, float scale)
         {
-            if(type == VoxelActionEnum.ADD_VOXEL)
-                return (MyFixedPoint)(ConcreteToolMod.CONCRETE_PLACE_USE * scale);
-
-            if(type == VoxelActionEnum.PAINT_VOXEL)
-                return (MyFixedPoint)(ConcreteToolMod.CONCRETE_PAINT_USE * scale);
-
-            return 0;
+            switch(type)
+            {
+                case VoxelActionEnum.ADD_VOXEL: return (MyFixedPoint)Math.Ceiling(ConcreteToolMod.CONCRETE_PLACE_USE * (scale * scale * scale));
+                case VoxelActionEnum.PAINT_VOXEL: return (MyFixedPoint)Math.Ceiling(ConcreteToolMod.CONCRETE_PAINT_USE * (scale * scale * scale));
+                default: return 0;
+            }
         }
 
         public static bool IsFaceVisible(Vector3D origin, Vector3 normal)

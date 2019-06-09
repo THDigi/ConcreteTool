@@ -7,7 +7,7 @@
         <SubtypeId>Concrete</SubtypeId>
       </Id>
       <MinedOre>Stone</MinedOre>
-      <MinedOreRatio>1.0</MinedOreRatio>
+      <MinedOreRatio>0.1</MinedOreRatio>
       <CanBeHarvested>true</CanBeHarvested>
       <IsRare>false</IsRare>
       <MaterialTypeName>Rock</MaterialTypeName>
