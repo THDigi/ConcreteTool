@@ -26,14 +26,18 @@ namespace Digi.ConcreteTool
     {
         public static ConcreteToolMod Instance = null;
 
-        private bool init = false;
-        private bool isThisDedicated = false;
+        internal bool init = false;
+        internal bool isThisDedicated = false;
 
         public readonly Networking Network = new Networking(63311);
         public readonly ChatCommands ChatCommands = new ChatCommands();
 
-        public IMyAutomaticRifleGun holdingTool = null;
         public bool SeenHelp = false;
+        internal IMyAutomaticRifleGun holdingTool;
+
+        internal uint tick;
+        internal MyEntity3DSoundEmitter hudSoundEmitter;
+        internal uint hudSoundTimeout;
 
         private IMyHudNotification toolStatus = null;
         private IMyHudNotification alignStatus = null;
@@ -91,6 +95,17 @@ namespace Digi.ConcreteTool
         private static readonly MyStringId MATERIAL_SQUARE = MyStringId.GetOrCompute("ConcreteTool_Square");
         private static readonly MyStringId MATERIAL_FADEOUTLINE = MyStringId.GetOrCompute("ConcreteTool_FadeOutLine");
         private static readonly MyStringId MATERIAL_FADEOUTPLANE = MyStringId.GetOrCompute("ConcreteTool_FadeOutPlane");
+
+        private readonly MySoundPair SOUND_PLACE_CONCRETE = new MySoundPair("ConcreteTool_PlaceConcrete");
+        private readonly MySoundPair SOUND_REMOVE_TERRAIN = new MySoundPair("ConcreteTool_RemoveTerrain");
+        private readonly MySoundPair SOUND_HUD_ITEM = new MySoundPair("HudItem");
+        private readonly MySoundPair SOUND_HUD_CLICK = new MySoundPair("HudClick");
+        private readonly MySoundPair SOUND_HUD_ROTATEBLOCK = new MySoundPair("HudRotateBlock");
+        private const float SOUND_HUD_ROTATEBLOCK_VOLUME = 0.3f;
+        private const uint SOUND_HUD_ROTATEBLOCK_TIMEOUT = 60;
+        private readonly MySoundPair SOUND_HUD_UNABLE = new MySoundPair("HudUnable");
+        private const float SOUND_HUD_UNABLE_VOLUME = 0.3f;
+        private const uint SOUND_HUD_UNABLE_TIMEOUT = 60;
 
         private const BlendTypeEnum BLEND_TYPE = BlendTypeEnum.SDR;
 
@@ -206,10 +221,10 @@ namespace Digi.ConcreteTool
             {
                 case VoxelActionEnum.ADD_VOXEL:
                 case VoxelActionEnum.PAINT_VOXEL:
-                    Utils.PlaySoundAt(character, "ConcreteTool_PlaceConcrete", soundVolume);
+                    Utils.PlaySoundAt(character, Instance.SOUND_PLACE_CONCRETE, soundVolume);
                     break;
                 case VoxelActionEnum.REMOVE_VOXEL:
-                    Utils.PlaySoundAt(character, "ConcreteTool_RemoveTerrain", soundVolume);
+                    Utils.PlaySoundAt(character, Instance.SOUND_REMOVE_TERRAIN, soundVolume);
                     break;
             }
             #endregion
@@ -244,6 +259,11 @@ namespace Digi.ConcreteTool
             {
                 if(isThisDedicated || !init)
                     return;
+
+                unchecked
+                {
+                    ++tick;
+                }
 
                 if(highlightEnts.Count > 0)
                 {
@@ -484,9 +504,9 @@ namespace Digi.ConcreteTool
                         else if(placeScale > MAX_SCALE)
                             placeScale = MAX_SCALE;
                         else
-                            Utils.PlayLocalSound("HudItem");
+                            Utils.PlayLocalSound(SOUND_HUD_ITEM);
 
-                        SetToolStatus("Scale: " + Math.Round(placeScale, 2), 1500, FONTCOLOR_INFO);
+                        SetToolStatus($"Scale: {placeScale:0.##}", 1500, FONTCOLOR_INFO);
                     }
                     else if(ctrl)
                     {
@@ -500,9 +520,9 @@ namespace Digi.ConcreteTool
                         else if(placeDistance > MAX_DISTANCE)
                             placeDistance = MAX_DISTANCE;
                         else
-                            Utils.PlayLocalSound("HudItem");
+                            Utils.PlayLocalSound(SOUND_HUD_ITEM);
 
-                        SetToolStatus("Distance: " + Math.Round(placeDistance, 2), 1500, FONTCOLOR_INFO);
+                        SetToolStatus($"Distance: {placeDistance:0.##}", 1500, FONTCOLOR_INFO);
                     }
                     // TODO more shapes? (scroll to shape)
                     //else
@@ -539,7 +559,7 @@ namespace Digi.ConcreteTool
                         if(++snap > 2)
                             snap = 0;
 
-                        Utils.PlayLocalSound("HudClick");
+                        Utils.PlayLocalSound(SOUND_HUD_CLICK);
 
                         switch(snap)
                         {
@@ -556,7 +576,7 @@ namespace Digi.ConcreteTool
                     }
                     else
                     {
-                        Utils.PlayLocalSound("HudItem");
+                        Utils.PlayLocalSound(SOUND_HUD_ITEM);
 
                         if(snap == 0 || snap == 1)
                         {
@@ -618,7 +638,7 @@ namespace Digi.ConcreteTool
                     }
 
                     if(increments)
-                        Utils.PlayLocalSound("HudRotateBlock");
+                        Utils.PlayLocalSound(SOUND_HUD_ROTATEBLOCK, SOUND_HUD_ROTATEBLOCK_VOLUME, SOUND_HUD_ROTATEBLOCK_TIMEOUT);
 
                     aligned = true; // next align action will result in a reset
                     double angleRad = ((ctrl ? 90 : (shift ? 15 : (alt ? 1 : 2))) / 180d) * Math.PI;
@@ -688,7 +708,7 @@ namespace Digi.ConcreteTool
                         if(shift)
                             MyAPIGateway.Utilities.ShowNotification($"NOTE: Shift+{InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT, true)} when aiming at a ship doesn't lock alignment to it!", 3000, MyFontEnum.Red);
 
-                        Utils.PlayLocalSound("HudItem");
+                        Utils.PlayLocalSound(SOUND_HUD_ITEM);
                     }
                     else
                     {
@@ -696,12 +716,12 @@ namespace Digi.ConcreteTool
                         {
                             aligned = false; // next align action will result in an align
                             lockAlign = true;
-                            Utils.PlayLocalSound("HudClick");
+                            Utils.PlayLocalSound(SOUND_HUD_CLICK);
                             // nothing else to do here, it'll be done every tick, below.
                         }
                         else
                         {
-                            Utils.PlayLocalSound("HudItem");
+                            Utils.PlayLocalSound(SOUND_HUD_ITEM);
                             lockAlign = false;
 
                             if(aligned)
@@ -775,7 +795,7 @@ namespace Digi.ConcreteTool
                 {
                     if(!soundPlayed_Unable)
                     {
-                        Utils.PlayLocalSound("HudUnable");
+                        Utils.PlayLocalSound(SOUND_HUD_UNABLE, SOUND_HUD_UNABLE_VOLUME, SOUND_HUD_UNABLE_TIMEOUT);
                         soundPlayed_Unable = true;
                     }
 
@@ -851,7 +871,7 @@ namespace Digi.ConcreteTool
                     {
                         if(!soundPlayed_Unable)
                         {
-                            Utils.PlayLocalSound("HudUnable");
+                            Utils.PlayLocalSound(SOUND_HUD_UNABLE, SOUND_HUD_UNABLE_VOLUME, SOUND_HUD_UNABLE_TIMEOUT);
                             soundPlayed_Unable = true;
                         }
 
@@ -920,7 +940,7 @@ namespace Digi.ConcreteTool
 
                 if(inv.GetItemAmount(CONCRETE_MAG_DEFID) < Utils.GetAmmoUsage(type, placeScale))
                 {
-                    Utils.PlayLocalSound("HudUnable");
+                    Utils.PlayLocalSound(SOUND_HUD_UNABLE, SOUND_HUD_UNABLE_VOLUME, SOUND_HUD_UNABLE_TIMEOUT);
                     SetToolStatus($"You need Concrete Mix to use this tool!", 1500, MyFontEnum.Red);
                     return false;
                 }
@@ -965,7 +985,7 @@ namespace Digi.ConcreteTool
 
                     if(localPlayerFound || highlightEnts.Count > 0)
                     {
-                        Utils.PlayLocalSound("HudUnable");
+                        Utils.PlayLocalSound(SOUND_HUD_UNABLE, SOUND_HUD_UNABLE_VOLUME, SOUND_HUD_UNABLE_TIMEOUT);
 
                         if(highlightEnts.Count == 0)
                         {

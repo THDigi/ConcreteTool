@@ -126,18 +126,41 @@ namespace Digi.ConcreteTool
             return result;
         }
 
-        public static void PlayLocalSound(string soundName, float volume = 0.3f)
+        public static void PlayLocalSound(MySoundPair soundPair, float volume = 0.3f, uint timeout = 0)
         {
-            var emitter = new MyEntity3DSoundEmitter((MyEntity)MyAPIGateway.Session.ControlledObject.Entity);
+            var mod = ConcreteToolMod.Instance;
+
+            if(!mod.init)
+                return;
+
+            if(mod.isThisDedicated)
+                throw new Exception("Sounds shouldn't play on DS side!");
+
+            if(timeout > 0)
+            {
+                var tick = mod.tick;
+
+                if(mod.hudSoundTimeout > tick)
+                    return;
+
+                mod.hudSoundTimeout = tick + timeout;
+            }
+
+            var emitter = mod.hudSoundEmitter;
+
+            if(emitter == null)
+                mod.hudSoundEmitter = emitter = new MyEntity3DSoundEmitter(null);
+
+            emitter.SetPosition(MyAPIGateway.Session.Camera.WorldMatrix.Translation);
             emitter.CustomVolume = volume;
-            emitter.PlaySingleSound(new MySoundPair(soundName));
+            emitter.PlaySound(soundPair, stopPrevious: false, alwaysHearOnRealistic: true, force2D: true);
         }
 
-        public static void PlaySoundAt(IMyEntity ent, string soundName, float volume = 0.3f)
+        public static void PlaySoundAt(IMyEntity ent, MySoundPair soundPair, float volume = 0.3f)
         {
             var emitter = new MyEntity3DSoundEmitter((MyEntity)ent);
             emitter.CustomVolume = volume;
-            emitter.PlaySingleSound(new MySoundPair(soundName));
+            emitter.PlaySingleSound(soundPair);
         }
 
         public static void PreventConcreteToolVanillaFiring()
