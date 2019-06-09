@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using Digi.ConcreteTool.MP;
 using Sandbox.Definitions;
 using Sandbox.Game;
@@ -70,6 +71,7 @@ namespace Digi.ConcreteTool
         private MyVoxelMaterialDefinition material = null;
         private readonly List<MyEntity> highlightEnts = new List<MyEntity>();
         private readonly List<IMyVoxelBase> maps = new List<IMyVoxelBase>();
+        private readonly StringBuilder sb = new StringBuilder(128);
 
         //private enum PlaceShape { BOX, SPHERE, CAPSULE, RAMP, }
 
@@ -178,17 +180,21 @@ namespace Digi.ConcreteTool
 
                     if(!IgnoreAmmoConsumption)
                     {
-                        doAction = false;
-                        var inv = character.GetInventory(0);
                         var useItems = Utils.GetAmmoUsage(type, scale);
 
-                        if(inv.GetItemAmount(CONCRETE_MAG_DEFID) >= useItems)
+                        if(useItems > 0)
                         {
-                            inv.RemoveItemsOfType(useItems, CONCRETE_MAG, false);
-                            doAction = true;
+                            doAction = false;
+                            var inv = character.GetInventory(0);
+
+                            if(inv.GetItemAmount(CONCRETE_MAG_DEFID) >= useItems)
+                            {
+                                inv.RemoveItemsOfType(useItems, CONCRETE_MAG, false);
+                                doAction = true;
+                            }
+                            else
+                                Log.Error($"Not enough ammo ({useItems}) for {type} on {character.DisplayName} ({character.EntityId})");
                         }
-                        else
-                            Log.Error($"Not enough ammo ({useItems}) for {type} on {character.DisplayName} ({character.EntityId})");
                     }
 
                     if(doAction)
@@ -946,13 +952,13 @@ namespace Digi.ConcreteTool
             #region Ammo check
             if(!IgnoreAmmoConsumption && ((primaryAction && !removeMode) || paintAction))
             {
-                var inv = character.GetInventory(0);
                 var type = (paintAction ? VoxelActionEnum.PAINT_VOXEL : (removeMode ? VoxelActionEnum.REMOVE_VOXEL : VoxelActionEnum.ADD_VOXEL));
+                var useItems = Utils.GetAmmoUsage(type, placeScale);
 
-                if(inv.GetItemAmount(CONCRETE_MAG_DEFID) < Utils.GetAmmoUsage(type, placeScale))
+                if(useItems > 0 && character.GetInventory(0).GetItemAmount(CONCRETE_MAG_DEFID) < useItems)
                 {
                     Utils.PlayLocalSound(SOUND_HUD_UNABLE, SOUND_HUD_UNABLE_VOLUME, SOUND_HUD_UNABLE_TIMEOUT);
-                    SetToolStatus($"You need Concrete Mix to use this tool!", 1500, MyFontEnum.Red);
+                    SetToolStatus("You need Concrete Mix to use this tool!", 1500, MyFontEnum.Red);
                     return false;
                 }
             }
@@ -973,7 +979,11 @@ namespace Digi.ConcreteTool
                 if(removeMode)
                 {
                     if(holdPress % 3 == 0)
-                        SetToolStatus("Removing " + (int)(((float)holdPress / (float)REMOVE_TARGET_TICKS) * 100f) + "%...", 100, MyFontEnum.Red);
+                    {
+                        int percent = (int)(((float)holdPress / (float)REMOVE_TARGET_TICKS) * 100f);
+
+                        SetToolStatus($"Removing {percent.ToString()}%...", 100, MyFontEnum.Red);
+                    }
 
                     if(holdPress >= REMOVE_TARGET_TICKS)
                     {
@@ -992,19 +1002,32 @@ namespace Digi.ConcreteTool
                     var shapeBB = shape.GetWorldBoundary();
                     MyGamePruningStructure.GetTopMostEntitiesInBox(ref shapeBB, highlightEnts, MyEntityQueryType.Dynamic);
                     highlightEnts.RemoveAll(e => !(e is IMyCubeGrid || e is IMyCharacter || e is IMyFloatingObject) || !e.PositionComp.WorldAABB.Intersects(shapeBB));
-                    var localPlayerFound = highlightEnts.Remove((MyEntity)MyAPIGateway.Session.Player.Character);
+                    bool localPlayerFound = highlightEnts.Remove((MyEntity)MyAPIGateway.Session.Player.Character);
+                    int highhlightsCount = highlightEnts.Count;
 
-                    if(localPlayerFound || highlightEnts.Count > 0)
+                    if(localPlayerFound || highhlightsCount > 0)
                     {
                         Utils.PlayLocalSound(SOUND_HUD_UNABLE, SOUND_HUD_UNABLE_VOLUME, SOUND_HUD_UNABLE_TIMEOUT);
 
-                        if(highlightEnts.Count == 0)
+                        if(highhlightsCount == 0)
                         {
                             SetToolStatus("You're in the way!", 1500, MyFontEnum.Red);
                         }
                         else
                         {
-                            SetToolStatus((localPlayerFound ? "You and " : "") + (highlightEnts.Count == 1 ? (localPlayerFound ? "one" : "One") + " thing " : highlightEnts.Count + " things ") + (localPlayerFound || highlightEnts.Count > 1 ? "are" : "is") + " in the way!", 1500, MyFontEnum.Red);
+                            sb.Clear();
+
+                            if(localPlayerFound)
+                                sb.Append("You and ");
+
+                            if(highlightEnts.Count == 1)
+                                sb.Append(localPlayerFound ? "one thing" : "One thing");
+                            else
+                                sb.Append(highhlightsCount.ToString()).Append(" things ");
+
+                            sb.Append(localPlayerFound || highhlightsCount > 1 ? "are" : "is").Append(" in the way!");
+
+                            SetToolStatus(sb.ToString(), 1500, MyFontEnum.Red);
                         }
 
                         highlightEntsTicks = 0; // reset fadeout timer
