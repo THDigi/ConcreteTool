@@ -1027,78 +1027,7 @@ namespace Digi.ConcreteTool
                 colorFace = Color.DarkRed * 0.2f;
             }
 
-            // optimized box draw compared to MySimpleObjectDraw.DrawTransparentBox; also allows consistent edge thickness
-            MyQuadD quad;
-            Vector3D p;
-            MatrixD m;
-            var halfScale = (placeScale / 2);
-            float lineLength = placeScale;
-            var material = MATERIAL_SQUARE;
-            const float ROTATE_90_RAD = (90f / 180f * MathHelper.Pi); // 90deg in radians
-            const float LINE_WIDTH = 0.015f;
-
-            p = placeMatrix.Translation + placeMatrix.Forward * halfScale;
-            if(Utils.IsFaceVisible(p, placeMatrix.Forward))
-            {
-                MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref placeMatrix);
-                MyTransparentGeometry.AddQuad(material, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
-            }
-
-            p = placeMatrix.Translation + placeMatrix.Backward * halfScale;
-            if(Utils.IsFaceVisible(p, placeMatrix.Backward))
-            {
-                MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref placeMatrix);
-                MyTransparentGeometry.AddQuad(material, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
-            }
-
-            p = placeMatrix.Translation + placeMatrix.Left * halfScale;
-            m = placeMatrix * MatrixD.CreateFromAxisAngle(placeMatrix.Up, ROTATE_90_RAD);
-            if(Utils.IsFaceVisible(p, placeMatrix.Left))
-            {
-                MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref m);
-                MyTransparentGeometry.AddQuad(material, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
-            }
-
-            p = placeMatrix.Translation + placeMatrix.Right * halfScale;
-            if(Utils.IsFaceVisible(p, placeMatrix.Right))
-            {
-                MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref m);
-                MyTransparentGeometry.AddQuad(material, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
-            }
-
-            m = placeMatrix * MatrixD.CreateFromAxisAngle(placeMatrix.Left, ROTATE_90_RAD);
-            p = placeMatrix.Translation + placeMatrix.Up * halfScale;
-            if(Utils.IsFaceVisible(p, placeMatrix.Up))
-            {
-                MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref m);
-                MyTransparentGeometry.AddQuad(material, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
-            }
-
-            p = placeMatrix.Translation + placeMatrix.Down * halfScale;
-            if(Utils.IsFaceVisible(p, placeMatrix.Down))
-            {
-                MyUtils.GenerateQuad(out quad, ref p, halfScale, halfScale, ref m);
-                MyTransparentGeometry.AddQuad(material, ref quad, colorFace, ref p, blendType: BLEND_TYPE);
-            }
-
-            var upHalf = (placeMatrix.Up * halfScale);
-            var rightHalf = (placeMatrix.Right * halfScale);
-            var forwardHalf = (placeMatrix.Forward * halfScale);
-
-            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + upHalf + -rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + upHalf + rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -upHalf + -rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -upHalf + rightHalf + placeMatrix.Forward * halfScale, placeMatrix.Backward, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-
-            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + -rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + -rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + rightHalf + placeMatrix.Up * halfScale, placeMatrix.Down, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-
-            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + -upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + forwardHalf + upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + -upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
-            MyTransparentGeometry.AddLineBillboard(material, colorWire, placeMatrix.Translation + -forwardHalf + upHalf + placeMatrix.Right * halfScale, placeMatrix.Left, lineLength, LINE_WIDTH, blendType: BLEND_TYPE);
+            Utils.DrawHighlightBox(placeMatrix, placeScale, 0.015f, MATERIAL_SQUARE, colorFace, colorWire, BLEND_TYPE);
 
             // TODO more shapes? (set shape)
             //switch(selectedShape)
