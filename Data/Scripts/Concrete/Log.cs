@@ -14,7 +14,7 @@ namespace Digi
     /// <summary>
     /// <para>Standalone logger, does not require any setup.</para>
     /// <para>Mod name is automatically set from workshop name or folder name. Can also be manually defined using <see cref="ModName"/>.</para>
-    /// <para>Version 1.52 by Digi</para>
+    /// <para>Version 1.56 by Digi</para>
     /// </summary>
     [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate, priority: int.MaxValue)]
     public class Log : MySessionComponentBase
@@ -24,10 +24,20 @@ namespace Digi
         private static bool unloaded = false;
 
         public const string FILE = "info.log";
-        public const int PRINT_TIME_INFO = 3000;
-        public const int PRINT_TIME_ERROR = 10000;
-        public const string PRINT_ERROR = "error";
-        public const string PRINT_MSG = "msg";
+        private const int DEFAULT_TIME_INFO = 3000;
+        private const int DEFAULT_TIME_ERROR = 10000;
+
+        /// <summary>
+        /// Print the generic error info.
+        /// (For use in <see cref="Log.Error(string, string, int)"/>'s 2nd arg)
+        /// </summary>
+        public const string PRINT_GENERIC_ERROR = "<err>";
+
+        /// <summary>
+        /// Prints the message instead of the generic generated error info.
+        /// (For use in <see cref="Log.Error(string, string, int)"/>'s 2nd arg)
+        /// </summary>
+        public const string PRINT_MESSAGE = "<msg>";
 
         #region Handling of handler
         public override void LoadData()
@@ -73,7 +83,7 @@ namespace Digi
             if(handler == null)
                 handler = new Handler();
         }
-        #endregion
+        #endregion Handling of handler
 
         #region Publicly accessible properties and methods
         /// <summary>
@@ -160,9 +170,9 @@ namespace Digi
         /// Writes an exception to custom log file, game's log file and by default writes a generic error message to player's HUD.
         /// </summary>
         /// <param name="exception">The exception to write to custom log and game's log.</param>
-        /// <param name="printText">HUD notification text, can be set to null to disable, to <see cref="PRINT_MSG"/> to use the exception message, <see cref="PRINT_ERROR"/> to use the predefined error message, or any other custom string.</param>
+        /// <param name="printText">HUD notification text, can be set to null to disable, to <see cref="PRINT_MESSAGE"/> to use the exception message, <see cref="PRINT_GENERIC_ERROR"/> to use the predefined error message, or any other custom string.</param>
         /// <param name="printTimeMs">How long to show the HUD notification for, in miliseconds.</param>
-        public static void Error(Exception exception, string printText = PRINT_ERROR, int printTimeMs = PRINT_TIME_ERROR)
+        public static void Error(Exception exception, string printText = PRINT_GENERIC_ERROR, int printTimeMs = DEFAULT_TIME_ERROR)
         {
             EnsureHandlerCreated();
             handler.Error(exception.ToString(), printText, printTimeMs);
@@ -172,9 +182,9 @@ namespace Digi
         /// Writes a message to custom log file, game's log file and by default writes a generic error message to player's HUD.
         /// </summary>
         /// <param name="message">The message printed to custom log and game log.</param>
-        /// <param name="printText">HUD notification text, can be set to null to disable, to <see cref="PRINT_MSG"/> to use the message arg, <see cref="PRINT_ERROR"/> to use the predefined error message, or any other custom string.</param>
+        /// <param name="printText">HUD notification text, can be set to null to disable, to <see cref="PRINT_MESSAGE"/> to use the message arg, <see cref="PRINT_GENERIC_ERROR"/> to use the predefined error message, or any other custom string.</param>
         /// <param name="printTimeMs">How long to show the HUD notification for, in miliseconds.</param>
-        public static void Error(string message, string printText = PRINT_ERROR, int printTimeMs = PRINT_TIME_ERROR)
+        public static void Error(string message, string printText = PRINT_MESSAGE, int printTimeMs = DEFAULT_TIME_ERROR)
         {
             EnsureHandlerCreated();
             handler.Error(message, printText, printTimeMs);
@@ -185,9 +195,9 @@ namespace Digi
         /// <para>Optionally prints a different message (or same message) in player's HUD.</para>
         /// </summary>
         /// <param name="message">The text that's written to log.</param>
-        /// <param name="printText">HUD notification text, can be set to null to disable, to <see cref="PRINT_MSG"/> to use the message arg or any other custom string.</param>
+        /// <param name="printText">HUD notification text, can be set to null to disable, to <see cref="PRINT_MESSAGE"/> to use the message arg or any other custom string.</param>
         /// <param name="printTimeMs">How long to show the HUD notification for, in miliseconds.</param>
-        public static void Info(string message, string printText = null, int printTimeMs = PRINT_TIME_INFO)
+        public static void Info(string message, string printText = null, int printTimeMs = DEFAULT_TIME_INFO)
         {
             EnsureHandlerCreated();
             handler.Info(message, printText, printTimeMs);
@@ -215,7 +225,7 @@ namespace Digi
 
             return false;
         }
-        #endregion
+        #endregion Publicly accessible properties and methods
 
         private class Handler
         {
@@ -225,6 +235,7 @@ namespace Digi
             private TextWriter writer;
             private int indent = 0;
             private string errorPrintText;
+            private bool sessionReady = false;
 
             private IMyHudNotification notifyInfo;
             private IMyHudNotification notifyError;
@@ -260,10 +271,11 @@ namespace Digi
                     return; // already initialized
 
                 if(MyAPIGateway.Utilities == null)
-                {
-                    Error("MyAPIGateway.Utilities is NULL !");
-                    return;
-                }
+                    throw new Exception("MyAPIGateway.Utilities is NULL !");
+
+                writer = MyAPIGateway.Utilities.WriteFileInLocalStorage(FILE, typeof(Log));
+
+                MyAPIGateway.Session.OnSessionReady += OnSessionReady;
 
                 this.sessionComp = sessionComp;
 
@@ -272,31 +284,54 @@ namespace Digi
 
                 WorkshopId = GetWorkshopID(sessionComp.ModContext.ModId);
 
-                writer = MyAPIGateway.Utilities.WriteFileInLocalStorage(FILE, typeof(Log));
+                ShowPreInitMessages();
+                InitMessage();
+            }
 
-                #region Pre-init messages
-                if(preInitMessages != null)
+            public void Close()
+            {
+                if(writer != null)
                 {
-                    string warning = $"{modName} WARNING: there are log messages before the mod initialized!";
+                    Info("Unloaded.");
 
-                    Info($"--- pre-init messages ---");
-
-                    foreach(var msg in preInitMessages)
-                    {
-                        Info(msg, warning);
-                    }
-
-                    Info("--- end pre-init messages ---");
-
-                    preInitMessages = null;
+                    writer.Flush();
+                    writer.Close();
+                    writer = null;
                 }
-                #endregion
 
-                #region Init message
+                sessionReady = false;
+                MyAPIGateway.Session.OnSessionReady -= OnSessionReady;
+            }
+
+            private void OnSessionReady()
+            {
+                sessionReady = true;
+            }
+
+            private void ShowPreInitMessages()
+            {
+                if(preInitMessages == null)
+                    return;
+
+                Info($"{modName} WARNING: there are log messages before the mod initialized!", PRINT_MESSAGE, 10000);
+                Info($"--- pre-init messages ---");
+
+                foreach(var msg in preInitMessages)
+                {
+                    Info(msg);
+                }
+
+                Info("--- end pre-init messages ---");
+
+                preInitMessages = null;
+            }
+
+            private void InitMessage()
+            {
                 sb.Clear();
                 sb.Append("Initialized");
-                sb.Append("\nGameMode=").Append(MyAPIGateway.Session.SessionSettings.GameMode);
-                sb.Append("\nOnlineMode=").Append(MyAPIGateway.Session.SessionSettings.OnlineMode);
+                sb.Append("\nGameMode=").Append(MyAPIGateway.Session.SessionSettings.GameMode.ToString());
+                sb.Append("\nOnlineMode=").Append(MyAPIGateway.Session.SessionSettings.OnlineMode.ToString());
                 sb.Append("\nServer=").Append(MyAPIGateway.Session.IsServer);
                 sb.Append("\nDS=").Append(MyAPIGateway.Utilities.IsDedicated);
                 sb.Append("\nDefined=");
@@ -327,19 +362,6 @@ namespace Digi
 
                 Info(sb.ToString());
                 sb.Clear();
-                #endregion
-            }
-
-            public void Close()
-            {
-                if(writer != null)
-                {
-                    Info("Unloaded.");
-
-                    writer.Flush();
-                    writer.Close();
-                    writer = null;
-                }
             }
 
             private void ComputeErrorPrintText()
@@ -363,9 +385,9 @@ namespace Digi
                 indent = 0;
             }
 
-            public void Error(string message, string printText = PRINT_ERROR, int printTime = PRINT_TIME_ERROR)
+            public void Error(string message, string printText = PRINT_GENERIC_ERROR, int printTime = DEFAULT_TIME_ERROR)
             {
-                MyLog.Default.WriteLineAndConsole(modName + " error/exception: " + message); // write to game's log
+                MyLog.Default.WriteLineAndConsole($"{modName} error/exception: {message}"); // write to game's log
 
                 LogMessage(message, "ERROR: "); // write to custom log
 
@@ -373,7 +395,7 @@ namespace Digi
                     ShowHudMessage(ref notifyError, message, printText, printTime, MyFontEnum.Red);
             }
 
-            public void Info(string message, string printText = null, int printTime = PRINT_TIME_INFO)
+            public void Info(string message, string printText = null, int printTime = DEFAULT_TIME_INFO)
             {
                 LogMessage(message); // write to custom log
 
@@ -383,36 +405,41 @@ namespace Digi
 
             private void ShowHudMessage(ref IMyHudNotification notify, string message, string printText, int printTime, string font)
             {
-                if(printText == null)
-                    return;
-
                 try
                 {
-                    if(MyAPIGateway.Utilities != null && !MyAPIGateway.Utilities.IsDedicated) // print on screen if applicable
+                    if(!sessionReady || printText == null || MyAPIGateway.Utilities == null || MyAPIGateway.Utilities.IsDedicated)
+                        return;
+
+                    if(printText == PRINT_GENERIC_ERROR)
                     {
-                        if(printText == PRINT_ERROR)
-                            printText = errorPrintText;
-                        else if(printText == PRINT_MSG)
-                            printText = message;
-
-                        if(notify == null)
-                        {
-                            notify = MyAPIGateway.Utilities.CreateNotification(printText, printTime, font);
-                        }
-                        else
-                        {
-                            notify.Text = printText;
-                            notify.AliveTime = printTime;
-                            notify.ResetAliveTime();
-                        }
-
-                        notify.Show();
+                        printText = errorPrintText;
                     }
+                    else if(printText == PRINT_MESSAGE)
+                    {
+                        if(font == MyFontEnum.Red)
+                            printText = $"[{modName} ERROR: {message}]";
+                        else
+                            printText = $"[{modName} WARNING: {message}]";
+                    }
+
+                    if(notify == null)
+                    {
+                        notify = MyAPIGateway.Utilities.CreateNotification(printText, printTime, font);
+                    }
+                    else
+                    {
+                        notify.Hide(); // required since SE v1.194
+                        notify.Text = printText;
+                        notify.AliveTime = printTime;
+                        notify.ResetAliveTime();
+                    }
+
+                    notify.Show();
                 }
                 catch(Exception e)
                 {
                     Info("ERROR: Could not send notification to local client: " + e);
-                    MyLog.Default.WriteLineAndConsole(modName + " logger error/exception: Could not send notification to local client: " + e);
+                    MyLog.Default.WriteLineAndConsole($"{modName} :: LOGGER error/exception: Could not send notification to local client: {e}");
                 }
             }
 
@@ -451,13 +478,13 @@ namespace Digi
                 }
                 catch(Exception e)
                 {
-                    MyLog.Default.WriteLineAndConsole($"{modName} had an error while logging message = '{message}'\nLogger error: {e.Message}\n{e.StackTrace}");
+                    MyLog.Default.WriteLineAndConsole($"{modName} :: LOGGER error/exception while logging: '{message}'\nLogger error: {e.Message}\n{e.StackTrace}");
                 }
             }
 
             private ulong GetWorkshopID(string modId)
             {
-                // HACK workaround for MyModContext not having the actual workshop ID number.
+                // NOTE: workaround for MyModContext not having the actual workshop ID number.
                 foreach(var mod in MyAPIGateway.Session.Mods)
                 {
                     if(mod.Name == modId)
