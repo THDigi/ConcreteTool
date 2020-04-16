@@ -113,10 +113,10 @@ namespace Digi.ConcreteTool
                 torque *= BOUNCE;
             }
 
-            var m = subpart.PositionComp.LocalMatrix;
-            var rm = Matrix.CreateFromAxisAngle(m.Up, MathHelper.ToRadians(currentAngle));
-            rm.Translation = m.Translation;
-            subpart.PositionComp.LocalMatrix = MatrixD.Normalize(rm);
+            var m = subpart.PositionComp.LocalMatrixRef;
+            var lm = Matrix.CreateFromAxisAngle(m.Up, MathHelper.ToRadians(currentAngle));
+            lm.Translation = m.Translation;
+            subpart.PositionComp.SetLocalMatrix(ref lm);
         }
 
         private Vector3 GetAccelAtPos()
@@ -185,33 +185,13 @@ namespace Digi.ConcreteTool
             if(++gravitySkip > GRAVITY_CHECK_TICKS)
             {
                 gravitySkip = 0;
-                gravityCache = MyParticlesManager.CalculateGravityInPoint(position);
+
+                float naturalGravityMultiplier;
+                gravityCache = MyAPIGateway.Physics.CalculateNaturalGravityAt(position, out naturalGravityMultiplier)
+                             + MyAPIGateway.Physics.CalculateArtificialGravityAt(position, naturalGravityMultiplier);
             }
 
             return gravityCache;
-
-            //if(++gravitySkip > 60)
-            //{
-            //    gravitySkip = 0;
-            //    planet = MyGamePruningStructure.GetClosestPlanet(position);
-            //}
-            //
-            //if(planet != null)
-            //{
-            //    if(planet.Closed)
-            //    {
-            //        planet = null;
-            //    }
-            //    else
-            //    {
-            //        var gravComp = planet.Components.Get<MyGravityProviderComponent>();
-            //
-            //        if(gravComp != null)
-            //            return gravComp.GetWorldGravity(position);
-            //    }
-            //}
-            //
-            //return Vector3.Zero;
         }
     }
 }

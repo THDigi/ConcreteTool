@@ -265,7 +265,6 @@ namespace Digi.ConcreteTool
 
             if(particleName != null && MyParticlesManager.TryCreateParticleEffect(particleName, ref matrix, ref origin, uint.MaxValue, out particle))
             {
-                particle.Loop = false;
                 particle.UserScale = scale / 3f;
             }
             #endregion
