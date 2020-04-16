@@ -1000,15 +1000,34 @@ namespace Digi.ConcreteTool
                     highlightEnts.Clear();
                     var shapeBB = shape.GetWorldBoundary();
                     MyGamePruningStructure.GetTopMostEntitiesInBox(ref shapeBB, highlightEnts, MyEntityQueryType.Dynamic);
-                    highlightEnts.RemoveAll(e => !(e is IMyCubeGrid || e is IMyCharacter || e is IMyFloatingObject) || !e.PositionComp.WorldAABB.Intersects(shapeBB));
-                    bool localPlayerFound = highlightEnts.Remove((MyEntity)MyAPIGateway.Session.Player.Character);
-                    int highhlightsCount = highlightEnts.Count;
 
-                    if(localPlayerFound || highhlightsCount > 0)
+                    bool localCharBlocking = false;
+
+                    for(int i = (highlightEnts.Count - 1); i >= 0; --i)
+                    {
+                        var ent = highlightEnts[i];
+
+                        if(!(ent is IMyCubeGrid || ent is IMyCharacter || ent is IMyFloatingObject) || !ent.PositionComp.WorldAABB.Intersects(shapeBB))
+                        {
+                            highlightEnts.RemoveAtFast(i); // needed as highlightEnts is used for highlighting the entities that are blocking
+                            continue;
+                        }
+
+                        if(object.ReferenceEquals(ent, MyAPIGateway.Session.Player.Character))
+                        {
+                            localCharBlocking = true;
+                            highlightEnts.RemoveAtFast(i);
+                            continue;
+                        }
+                    }
+
+                    int entitiesBlocking = highlightEnts.Count;
+
+                    if(localCharBlocking || entitiesBlocking > 0)
                     {
                         Utils.PlayLocalSound(SOUND_HUD_UNABLE, SOUND_HUD_UNABLE_VOLUME, SOUND_HUD_UNABLE_TIMEOUT);
 
-                        if(highhlightsCount == 0)
+                        if(entitiesBlocking == 0)
                         {
                             SetToolStatus("You're in the way!", 1500, MyFontEnum.Red);
                         }
@@ -1016,15 +1035,15 @@ namespace Digi.ConcreteTool
                         {
                             sb.Clear();
 
-                            if(localPlayerFound)
+                            if(localCharBlocking)
                                 sb.Append("You and ");
 
-                            if(highlightEnts.Count == 1)
-                                sb.Append(localPlayerFound ? "one thing" : "One thing");
+                            if(entitiesBlocking == 1)
+                                sb.Append(localCharBlocking ? " one thing " : "One thing ");
                             else
-                                sb.Append(highhlightsCount.ToString()).Append(" things ");
+                                sb.Append(entitiesBlocking.ToString()).Append(" things ");
 
-                            sb.Append(localPlayerFound || highhlightsCount > 1 ? "are" : "is").Append(" in the way!");
+                            sb.Append(localCharBlocking || entitiesBlocking > 1 ? "are" : "is").Append(" in the way!");
 
                             SetToolStatus(sb.ToString(), 1500, MyFontEnum.Red);
                         }
