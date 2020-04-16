@@ -443,6 +443,7 @@ namespace Digi.ConcreteTool
             if(toolStatus == null)
                 toolStatus = MyAPIGateway.Utilities.CreateNotification("", aliveTime, font);
 
+            toolStatus.Hide();
             toolStatus.Font = font;
             toolStatus.Text = text;
             toolStatus.AliveTime = aliveTime;
@@ -454,6 +455,7 @@ namespace Digi.ConcreteTool
             if(alignStatus == null)
                 alignStatus = MyAPIGateway.Utilities.CreateNotification("", aliveTime, font);
 
+            alignStatus.Hide();
             alignStatus.Font = font;
             alignStatus.Text = text;
             alignStatus.AliveTime = aliveTime;
@@ -465,6 +467,7 @@ namespace Digi.ConcreteTool
             if(snapStatus == null)
                 snapStatus = MyAPIGateway.Utilities.CreateNotification("", aliveTime, font);
 
+            snapStatus.Hide();
             snapStatus.Font = font;
             snapStatus.Text = text;
             snapStatus.AliveTime = aliveTime;
