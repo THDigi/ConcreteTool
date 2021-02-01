@@ -193,7 +193,7 @@ namespace Digi.ConcreteTool
                                 doAction = true;
                             }
                             else
-                                Log.Error($"Not enough ammo ({useItems}) for {type} on {character.DisplayName} ({character.EntityId})");
+                                Log.Error($"Not enough ammo ({useItems.ToString()}) for {type.ToString()} on {character.DisplayName} ({character.EntityId.ToString()})");
                         }
                     }
 
@@ -396,7 +396,7 @@ namespace Digi.ConcreteTool
 
                 selectedVoxelMap = maps[selectedVoxelMapIndex];
 
-                MyAPIGateway.Utilities.ShowNotification($"([{InputHandler.GetAssignedGameControlNames(MyControlsSpace.USE)}]) Selected Voxel Map: {selectedVoxelMap.StorageName} ({(selectedVoxelMapIndex + 1)} of { maps.Count})", 16, MyFontEnum.Blue);
+                MyAPIGateway.Utilities.ShowNotification($"([{InputHandler.GetAssignedGameControlNames(MyControlsSpace.USE)}]) Selected Voxel Map: {selectedVoxelMap.StorageName} ({(selectedVoxelMapIndex + 1).ToString()} of {maps.Count.ToString()})", 16, MyFontEnum.Blue);
             }
 
             maps.Clear();
@@ -526,7 +526,7 @@ namespace Digi.ConcreteTool
                         else
                             Utils.PlayLocalSound(SOUND_HUD_ITEM);
 
-                        SetToolStatus($"Scale: {placeScale:0.##}", 1500, FONTCOLOR_INFO);
+                        SetToolStatus($"Scale: {placeScale.ToString("0.##")}", 1500, FONTCOLOR_INFO);
                     }
                     else if(ctrl)
                     {
@@ -542,7 +542,7 @@ namespace Digi.ConcreteTool
                         else
                             Utils.PlayLocalSound(SOUND_HUD_ITEM);
 
-                        SetToolStatus($"Distance: {placeDistance:0.##}", 1500, FONTCOLOR_INFO);
+                        SetToolStatus($"Distance: {placeDistance.ToString("0.##")}", 1500, FONTCOLOR_INFO);
                     }
                     // TODO more shapes? (scroll to shape)
                     //else
@@ -708,7 +708,8 @@ namespace Digi.ConcreteTool
                     Vector3D angles;
                     MatrixD.GetEulerAnglesXYZ(ref placeMatrix, out angles);
 
-                    SetAlignStatus($"Align: Custom - {Math.Round(MathHelperD.ToDegrees(angles.X))}° / {Math.Round(MathHelperD.ToDegrees(angles.Y))}° / {Math.Round(MathHelperD.ToDegrees(angles.Z))}°", 500, FONTCOLOR_INFO);
+                    const string format = "0";
+                    SetAlignStatus($"Align: Custom - {MathHelperD.ToDegrees(angles.X).ToString(format)}° / {MathHelperD.ToDegrees(angles.Y).ToString(format)}° / {MathHelperD.ToDegrees(angles.Z).ToString(format)}°", 500, FONTCOLOR_INFO);
                 }
                 #endregion Input: custom alignment
 

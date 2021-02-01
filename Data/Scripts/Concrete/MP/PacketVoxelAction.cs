@@ -48,7 +48,7 @@ namespace Digi.ConcreteTool.MP
 
             if(voxelEnt == null)
             {
-                Log.Error($"Received packet with wrong entity; entityId={VoxelEntId}; expected IMyVoxelBase got ={MyAPIGateway.Entities.GetEntityById(VoxelEntId)}; actionType={ActionType}");
+                Log.Error($"Received packet with wrong entity; entityId={VoxelEntId.ToString()}; expected IMyVoxelBase got ={MyAPIGateway.Entities.GetEntityById(VoxelEntId)}; actionType={ActionType.ToString()}");
                 return false;
             }
 
@@ -65,7 +65,7 @@ namespace Digi.ConcreteTool.MP
 
             if(character == null)
             {
-                Log.Error($"Received packet with unknown character entityId={CharEntId}; found={MyAPIGateway.Entities.GetEntityById(CharEntId)}; actionType={ActionType}");
+                Log.Error($"Received packet with unknown character entityId={CharEntId.ToString()}; found={MyAPIGateway.Entities.GetEntityById(CharEntId)}; actionType={ActionType.ToString()}");
                 return false;
             }
 
