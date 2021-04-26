@@ -115,7 +115,7 @@ namespace Digi.ConcreteTool
 
         public const float CONCRETE_PLACE_USE = 1f;
         public const float CONCRETE_PAINT_USE = 0.25f;
-        private const int REMOVE_TARGET_TICKS = 20;
+        private const int REMOVE_TARGET_TICKS = 20; // at MIN_SCALE, then it gets multiplied up to 1+MAX_SCALE
         private const int RECENT_ACTION_TICKS = 10;
 
         public override void LoadData()
@@ -981,14 +981,16 @@ namespace Digi.ConcreteTool
 
                 if(removeMode)
                 {
+                    int RemoveTargeTicks = (int)(REMOVE_TARGET_TICKS * (1f + (placeScale - MIN_SCALE)));
+
                     if(holdPress % 3 == 0)
                     {
-                        int percent = (int)(((float)holdPress / (float)REMOVE_TARGET_TICKS) * 100f);
+                        int percent = (int)(((float)holdPress / (float)RemoveTargeTicks) * 100f);
 
                         SetToolStatus($"Removing {percent.ToString()}%...", 100, MyFontEnum.Red);
                     }
 
-                    if(holdPress >= REMOVE_TARGET_TICKS)
+                    if(holdPress >= RemoveTargeTicks)
                     {
                         holdPress = 0;
                         cooldown = cooldownTicks;
