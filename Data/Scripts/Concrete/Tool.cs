@@ -48,6 +48,14 @@ namespace Digi.ConcreteTool
             if(Mod == null || owner == null || owner.Physics == null)
                 return;
 
+            var rifle = (IMyAutomaticRifleGun)Entity;
+            if(rifle.GunBase == null)
+                throw new NullReferenceException($"{GetType().Name} :: Rifle.GunBase == null; ent={rifle}; owner={rifle.Owner}/{rifle.OwnerIdentityId.ToString()}");
+
+            // HACK: prevent tool from ever reloading, which breaks animations for other things
+            if(rifle.GunBase.CurrentAmmo <= 0)
+                rifle.GunBase.CurrentAmmo = 1;
+
             first = false; // don't move this up because it needs to repeat until mod and character are available for a valid check
 
             // checking if local player is holding it
