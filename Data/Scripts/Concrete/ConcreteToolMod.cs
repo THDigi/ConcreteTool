@@ -571,7 +571,7 @@ namespace Digi.ConcreteTool
                 #region Input: snapping
                 if(MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.FREE_ROTATION))
                 {
-                    if(!shift)
+                    if(!ctrl)
                     {
                         snapLock = false;
                         snapAxis = 0;
@@ -661,7 +661,17 @@ namespace Digi.ConcreteTool
                         Utils.PlayLocalSound(SOUND_HUD_ROTATEBLOCK, SOUND_HUD_ROTATEBLOCK_VOLUME, SOUND_HUD_ROTATEBLOCK_TIMEOUT);
 
                     aligned = true; // next align action will result in a reset
-                    double angleRad = ((ctrl ? 90 : (shift ? 15 : (alt ? 1 : 2))) / 180d) * Math.PI;
+
+                    int angleDeg = 2;
+
+                    if(shift || (ctrl && alt))
+                        angleDeg = 15;
+                    else if(ctrl)
+                        angleDeg = 90;
+                    else if(alt)
+                        angleDeg = 1;
+
+                    double angleRad = (angleDeg / 180d) * Math.PI;
 
                     if(snapAxisLock)
                         placeMatrix.Translation = Vector3D.Zero;

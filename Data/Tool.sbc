@@ -32,7 +32,7 @@
 [Ctrl+Scroll] adjust box distance
 {2} or {3} cycles alignment mode
 {4} cycles snap mode
-[Shift+]{4} lock mode
+[Ctrl+]{4} lock mode
 {5} cycle overlapping voxels
 [BlockRotation] rotate box</Description>
       <DescriptionArgs>PRIMARY_TOOL_ACTION,CUBE_COLOR_CHANGE,CUBE_BUILDER_CUBESIZE_MODE,CUBE_DEFAULT_MOUNTPOINT,FREE_ROTATION,USE</DescriptionArgs>

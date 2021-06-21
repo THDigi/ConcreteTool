@@ -78,14 +78,14 @@ namespace Digi.ConcreteTool
             str.AppendLine();
             str.Append(inputSnap).Append(" = cycles snap mode: no snap / snap voxel grid / snap to altitude.").AppendLine();
             str.AppendLine();
-            str.Append("Shift+").Append(inputSnap).Append(" = depending on snap mode: lock to axis/plane / lock to altitude.").AppendLine();
+            str.Append("Ctrl+").Append(inputSnap).Append(" = depending on snap mode: lock to axis/plane / lock to altitude.").AppendLine();
             str.AppendLine();
             str.Append(inputCycleMap).Append(" = cycle between overlapping voxel maps.").AppendLine();
             str.AppendLine();
             str.Append(string.Join(",", inputsRotation)).Append(" = rotate the box.").AppendLine();
             str.AppendLine("  ...+Alt = rotate 1 degree increments.");
-            str.AppendLine("  ...+Shift = rotate 15 degree increments.");
             str.AppendLine("  ...+Ctrl = rotate 90 degree increments.");
+            str.AppendLine("  ...+Shift or +Alt+Ctrl = rotate 15 degree increments");
             str.AppendLine();
             str.Append(inputHelp).Append(" = show this window.").AppendLine();
 
