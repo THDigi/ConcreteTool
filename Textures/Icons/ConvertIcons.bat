@@ -1,10 +1,8 @@
 @echo off
-SET TEXCONV=C:\Steam\steamapps\common\SpaceEngineers\Tools\TexturePacking\Tools\texconv
+set texconv=C:\Programs\Texconv\texconv.exe
 cls
 
-FOR %%f IN (*.png) DO (
-  echo %%~nf
-  %TEXCONV% -ft dds -f BC7_UNORM_SRGB %%~nf.png -pmalpha -y
-)
+%texconv% *.png -y -ft dds -f BC7_UNORM_SRGB -pmalpha
 
+ren *.DDS *.dds
 pause
