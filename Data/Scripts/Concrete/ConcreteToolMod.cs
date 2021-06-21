@@ -68,6 +68,8 @@ namespace Digi.ConcreteTool
         private bool soundPlayed_Unable = false;
         private Vector3D target; // for use in delegate to avoid allocations
 
+        private bool CubeBuilderAlignMode; // to reset it when pressing the bind
+
         private MyVoxelMaterialDefinition material = null;
         private readonly List<MyEntity> highlightEnts = new List<MyEntity>();
         private readonly List<IMyVoxelBase> maps = new List<IMyVoxelBase>();
@@ -340,6 +342,7 @@ namespace Digi.ConcreteTool
         public void EquipTool(IMyAutomaticRifleGun gun)
         {
             holdingTool = gun;
+            CubeBuilderAlignMode = MyCubeBuilder.Static.AlignToDefault;
 
             if(!SeenHelp)
                 SetToolStatus($"Press {InputHandler.GetAssignedGameControlNames(MyControlsSpace.SECONDARY_TOOL_ACTION)} to see Concrete Tools' advanced controls.", 1500, MyFontEnum.White);
@@ -498,6 +501,13 @@ namespace Digi.ConcreteTool
                 ctrl = MyAPIGateway.Input.IsAnyCtrlKeyPressed();
                 alt = MyAPIGateway.Input.IsAnyAltKeyPressed();
                 removeMode = ctrl;
+
+                // prevent align-to-default from changing for cubebuilder when using this bind
+                bool pressedCubeDefaultMountpoint = MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT);
+                if(pressedCubeDefaultMountpoint)
+                {
+                    MyCubeBuilder.Static.AlignToDefault = CubeBuilderAlignMode;
+                }
 
                 #region Input: scroll (distance/scale)
                 var scroll = MyAPIGateway.Input.DeltaMouseScrollWheelValue();
@@ -724,7 +734,7 @@ namespace Digi.ConcreteTool
                 #endregion Input: custom alignment
 
                 #region Input: alignment
-                if(MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT) || MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.CUBE_BUILDER_CUBESIZE_MODE))
+                if(pressedCubeDefaultMountpoint || MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.CUBE_BUILDER_CUBESIZE_MODE))
                 {
                     IMyCubeGrid grid = MyAPIGateway.CubeBuilder.FindClosestGrid();
                     if(grid != null)
