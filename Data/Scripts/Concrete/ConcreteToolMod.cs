@@ -718,32 +718,31 @@ namespace Digi.ConcreteTool
                     Vector3D angles;
                     MatrixD.GetEulerAnglesXYZ(ref placeMatrix, out angles);
 
-                    const string format = "0";
-                    SetAlignStatus($"Align: Custom - {MathHelperD.ToDegrees(angles.X).ToString(format)}° / {MathHelperD.ToDegrees(angles.Y).ToString(format)}° / {MathHelperD.ToDegrees(angles.Z).ToString(format)}°", 500, FONTCOLOR_INFO);
+                    const string Format = "0";
+                    SetAlignStatus($"Align: custom [{MathHelperD.ToDegrees(angles.X).ToString(Format)}]° pitch / [{MathHelperD.ToDegrees(angles.Y).ToString(Format)}]° yaw / [{MathHelperD.ToDegrees(angles.Z).ToString(Format)}]° roll", 500, FONTCOLOR_INFO);
                 }
                 #endregion Input: custom alignment
 
                 #region Input: alignment
                 if(MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT) || MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.CUBE_BUILDER_CUBESIZE_MODE))
                 {
-                    var grid = MyAPIGateway.CubeBuilder.FindClosestGrid();
-
+                    IMyCubeGrid grid = MyAPIGateway.CubeBuilder.FindClosestGrid();
                     if(grid != null)
                     {
                         placeMatrix = grid.WorldMatrix;
                         aligned = true; // next align action will result in a reset
                         lockAlign = false;
 
-                        SetAlignStatus("Align: [Aimed ship]", 1500, FONTCOLOR_INFO);
+                        SetAlignStatus("Align: [aimed ship]", 1500, FONTCOLOR_INFO);
 
-                        if(shift)
-                            MyAPIGateway.Utilities.ShowNotification($"NOTE: Shift+{InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT, true)} when aiming at a ship doesn't lock alignment to it!", 3000, MyFontEnum.Red);
+                        if(ctrl)
+                            MyAPIGateway.Utilities.ShowNotification($"NOTE: Ctrl+{InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT, true)} when aiming at a ship doesn't lock alignment to it!", 3000, MyFontEnum.Red);
 
                         Utils.PlayLocalSound(SOUND_HUD_ITEM);
                     }
                     else
                     {
-                        if(shift && !lockAlign)
+                        if(ctrl && !lockAlign)
                         {
                             aligned = false; // next align action will result in an align
                             lockAlign = true;
@@ -761,7 +760,7 @@ namespace Digi.ConcreteTool
 
                                 placeMatrix = MatrixD.Identity;
 
-                                SetAlignStatus("Align: Reset (world axis)", 1500, FONTCOLOR_INFO);
+                                SetAlignStatus("Align: reset (world axis)", 1500, FONTCOLOR_INFO);
                             }
                             else
                             {
@@ -769,7 +768,7 @@ namespace Digi.ConcreteTool
 
                                 AimToCenter(voxelEnt, view.Forward);
 
-                                SetAlignStatus((planet != null ? "Align: Center of planet" : "Align: Center of asteroid"), 1500, FONTCOLOR_INFO);
+                                SetAlignStatus((planet != null ? "Align: planet center" : "Align: asteroid center"), 1500, FONTCOLOR_INFO);
                             }
                         }
                     }

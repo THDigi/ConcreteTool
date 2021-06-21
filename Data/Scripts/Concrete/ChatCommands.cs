@@ -44,6 +44,7 @@ namespace Digi.ConcreteTool
             var inputPaint = InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_COLOR_CHANGE);
             var inputHelp = InputHandler.GetAssignedGameControlNames(MyControlsSpace.SECONDARY_TOOL_ACTION);
             var inputAlign = InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT);
+            var inputAlign2 = InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_BUILDER_CUBESIZE_MODE);
             var inputSnap = InputHandler.GetAssignedGameControlNames(MyControlsSpace.FREE_ROTATION, true);
             var inputCycleMap = InputHandler.GetAssignedGameControlNames(MyControlsSpace.USE);
             string[] inputsRotation =
@@ -74,18 +75,20 @@ namespace Digi.ConcreteTool
             str.AppendLine();
             str.Append("Ctrl+MouseScroll/Plus/Minus = adjust box distance.").AppendLine();
             str.AppendLine();
-            str.Append(inputAlign).Append(" = cycles alignment mode: reset alignment / align towards\n  center of asteroid/planet / align with aimed at grid.").AppendLine();
+            str.Append(inputAlign).Append("/").Append(inputAlign2).Append(" = cycles alignment mode: reset alignment / align towards\n  center of asteroid/planet / align with aimed at grid.").AppendLine();
+            str.AppendLine();
+            str.Append("Ctrl+").Append(inputAlign).Append("/Ctrl+").Append(inputAlign2).Append(" = locks alignment towards center of asteroid/planet.").AppendLine();
             str.AppendLine();
             str.Append(inputSnap).Append(" = cycles snap mode: no snap / snap voxel grid / snap to altitude.").AppendLine();
             str.AppendLine();
             str.Append("Ctrl+").Append(inputSnap).Append(" = depending on snap mode: lock to axis/plane / lock to altitude.").AppendLine();
             str.AppendLine();
-            str.Append(inputCycleMap).Append(" = cycle between overlapping voxel maps.").AppendLine();
-            str.AppendLine();
             str.Append(string.Join(",", inputsRotation)).Append(" = rotate the box.").AppendLine();
             str.AppendLine("  ...+Alt = rotate 1 degree increments.");
             str.AppendLine("  ...+Ctrl = rotate 90 degree increments.");
             str.AppendLine("  ...+Shift or +Alt+Ctrl = rotate 15 degree increments");
+            str.AppendLine();
+            str.Append(inputCycleMap).Append(" = cycle between overlapping voxel maps.").AppendLine();
             str.AppendLine();
             str.Append(inputHelp).Append(" = show this window.").AppendLine();
 
