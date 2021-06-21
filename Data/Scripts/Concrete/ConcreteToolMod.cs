@@ -6,8 +6,10 @@ using Sandbox.Definitions;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Character.Components;
+using Sandbox.Game.Gui;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Weapons;
+using VRage;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.Entity;
@@ -182,20 +184,20 @@ namespace Digi.ConcreteTool
 
                     if(!IgnoreAmmoConsumption)
                     {
-                        var useItems = Utils.GetAmmoUsage(type, scale);
-
+                        MyFixedPoint useItems = Utils.GetAmmoUsage(type, scale);
                         if(useItems > 0)
                         {
                             doAction = false;
-                            var inv = character.GetInventory(0);
-
+                            IMyInventory inv = character.GetInventory(0);
                             if(inv.GetItemAmount(CONCRETE_MAG_DEFID) >= useItems)
                             {
                                 inv.RemoveItemsOfType(useItems, CONCRETE_MAG, false);
                                 doAction = true;
                             }
                             else
+                            {
                                 Log.Error($"Not enough ammo ({useItems.ToString()}) for {type.ToString()} on {character.DisplayName} ({character.EntityId.ToString()})");
+                            }
                         }
                     }
 
@@ -344,8 +346,17 @@ namespace Digi.ConcreteTool
             holdingTool = gun;
             CubeBuilderAlignMode = MyCubeBuilder.Static.AlignToDefault;
 
-            if(!SeenHelp)
-                SetToolStatus($"Press {InputHandler.GetAssignedGameControlNames(MyControlsSpace.SECONDARY_TOOL_ACTION)} to see Concrete Tools' advanced controls.", 1500, MyFontEnum.White);
+            if(placeScale > 1f)
+            {
+                MyFixedPoint addCost = Utils.GetAmmoUsage(VoxelActionEnum.ADD_VOXEL, placeScale);
+                MyFixedPoint paintCost = Utils.GetAmmoUsage(VoxelActionEnum.PAINT_VOXEL, placeScale);
+
+                SetToolStatus($"Add concrete cost: {addCost.ToString()} / Replace cost: {paintCost.ToString()}", 1500, MyFontEnum.White);
+            }
+            else if(!SeenHelp && (MyAPIGateway.Session?.Config?.HudState ?? 1) != 1) // only show if hud is not in hints mode
+            {
+                SetToolStatus($"Press {InputHandler.GetAssignedGameControlNames(MyControlsSpace.SECONDARY_TOOL_ACTION)} to see Concrete Tool help window.", 1500, MyFontEnum.White);
+            }
         }
 
         private void HolsterTool()
@@ -536,7 +547,10 @@ namespace Digi.ConcreteTool
                         else
                             Utils.PlayLocalSound(SOUND_HUD_ITEM);
 
-                        SetToolStatus($"Scale: {placeScale.ToString("0.##")}", 1500, FONTCOLOR_INFO);
+                        MyFixedPoint addCost = Utils.GetAmmoUsage(VoxelActionEnum.ADD_VOXEL, placeScale);
+                        MyFixedPoint paintCost = Utils.GetAmmoUsage(VoxelActionEnum.PAINT_VOXEL, placeScale);
+
+                        SetToolStatus($"Box Scale: {placeScale.ToString("0.##")} - Add concrete cost: {addCost.ToString()} / Replace cost: {paintCost.ToString()}", 1500, FONTCOLOR_INFO);
                     }
                     else if(ctrl)
                     {
@@ -552,7 +566,7 @@ namespace Digi.ConcreteTool
                         else
                             Utils.PlayLocalSound(SOUND_HUD_ITEM);
 
-                        SetToolStatus($"Distance: {placeDistance.ToString("0.##")}", 1500, FONTCOLOR_INFO);
+                        SetToolStatus($"Box Distance: {placeDistance.ToString("0.##")}", 1500, FONTCOLOR_INFO);
                     }
                     // TODO more shapes? (scroll to shape)
                     //else
