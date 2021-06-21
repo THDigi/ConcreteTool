@@ -63,6 +63,7 @@ namespace Digi.ConcreteTool
             str.AppendLine("The tool and ammo for it can be made in an assembler.");
             str.AppendLine("While holding the tool, you must be near a planet or asteroid to use it.");
             str.AppendLine("Concrete Mix usage is affected by box scale and add/paint action, rescaling box will print costs.");
+            str.AppendLine("Mining the Concrete yields Concrete Rubble, which can be refined back into Gravel.");
             str.AppendLine();
             str.AppendLine("Controls:");
             str.AppendLine();

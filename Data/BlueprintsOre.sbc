@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<Definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Blueprints>
+    <Blueprint>
+      <Id>
+        <TypeId>BlueprintDefinition</TypeId>
+        <SubtypeId>ConcreteOreToGravel</SubtypeId>
+      </Id>
+      <DisplayName>Concrete Rubble to Gravel</DisplayName>
+      <Icon>Textures\GUI\Icons\ingot\ingot_class.dds</Icon>
+      <Prerequisites>
+        <Item Amount="100" TypeId="Ore" SubtypeId="Concrete" />
+      </Prerequisites>
+      <Results>
+        <Item Amount="100" TypeId="Ingot" SubtypeId="Stone" />
+      </Results>
+      <BaseProductionTimeInSeconds>1</BaseProductionTimeInSeconds>
+    </Blueprint>
+  </Blueprints>
+  <BlueprintClassEntries>
+    <!-- survival kit -->
+    <Entry Class="BasicComponents" BlueprintSubtypeId="ConcreteOreToGravel" />
+
+    <!-- basic refinery -->
+    <Entry Class="CommonMetals" BlueprintSubtypeId="ConcreteOreToGravel" />
+
+    <!-- refinery -->
+    <Entry Class="Ingots" BlueprintSubtypeId="ConcreteOreToGravel" />
+  </BlueprintClassEntries>
+</Definitions>

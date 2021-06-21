@@ -6,7 +6,7 @@
         <TypeId>VoxelMaterialDefinition</TypeId>
         <SubtypeId>Concrete</SubtypeId>
       </Id>
-      <MinedOre>Stone</MinedOre>
+      <MinedOre>Concrete</MinedOre>
       <MinedOreRatio>0.1</MinedOreRatio>
       <CanBeHarvested>true</CanBeHarvested>
       <IsRare>false</IsRare>
