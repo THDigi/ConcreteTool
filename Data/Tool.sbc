@@ -62,10 +62,10 @@
       <SimulateLeftHandFps xsi:nil="true" />
       <SimulateRightHandFps xsi:nil="true" />
       <LeftHandOrientation>
-        <X>-0.419231176</X>
-        <Y>0.607241</Y>
-        <Z>-0.498591751</Z>
-        <W>-0.454873383</W>
+        <X>-0.419231236</X>
+        <Y>0.607241035</Y>
+        <Z>-0.4985918</Z>
+        <W>-0.454873443</W>
       </LeftHandOrientation>
       <LeftHandPosition>
         <X>-0.10409838</X>
@@ -73,15 +73,15 @@
         <Z>-0.0328733325</Z>
       </LeftHandPosition>
       <RightHandOrientation>
-        <X>0.4673301</X>
-        <Y>0.5531049</Y>
-        <Z>0.630780041</Z>
-        <W>-0.278915882</W>
+        <X>0.432772279</X>
+        <Y>0.456063122</Y>
+        <Z>0.6195057</Z>
+        <W>-0.470028847</W>
       </RightHandOrientation>
       <RightHandPosition>
-        <X>0.0164365768</X>
-        <Y>0.0328727961</Y>
-        <Z>0.306815267</Z>
+        <X>-7.15255737E-07</X>
+        <Y>-0.0109585524</Y>
+        <Z>0.345167279</Z>
       </RightHandPosition>
       <ItemOrientation>
         <X>0.1278963</X>
@@ -90,9 +90,9 @@
         <W>0.975295246</W>
       </ItemOrientation>
       <ItemPosition>
-        <X>0.121630311</X>
-        <Y>-0.233399272</Y>
-        <Z>-0.292570829</Z>
+        <X>-1</X>
+        <Y>-1</Y>
+        <Z>-1</Z>
       </ItemPosition>
       <ItemWalkingOrientation>
         <X>0.23858656</X>
@@ -124,7 +124,7 @@
       </ItemIronsightOrientation>
       <ItemIronsightPosition>
         <X>0</X>
-        <Y>0</Y>
+        <Y>0.0009683235</Y>
         <Z>0</Z>
       </ItemIronsightPosition>
       <ItemOrientation3rd>
@@ -140,7 +140,7 @@
       </ItemPosition3rd>
       <ItemWalkingOrientation3rd>
         <X>0</X>
-        <Y>0.106684186</Y>
+        <Y>0.106684193</Y>
         <Z>0</Z>
         <W>0.994293</W>
       </ItemWalkingOrientation3rd>
@@ -200,6 +200,18 @@
       <ItemPositioningShoot3rd>TransformFromAnim</ItemPositioningShoot3rd>
       <ItemPositioningIronsight>TransformFromData</ItemPositioningIronsight>
       <ItemPositioningIronsight3rd>TransformFromAnim</ItemPositioningIronsight3rd>
+      <SprintSpeedMultiplier>1</SprintSpeedMultiplier>
+      <RunSpeedMultiplier>1</RunSpeedMultiplier>
+      <BackrunSpeedMultiplier>1</BackrunSpeedMultiplier>
+      <RunStrafingSpeedMultiplier>1</RunStrafingSpeedMultiplier>
+      <WalkSpeedMultiplier>1</WalkSpeedMultiplier>
+      <BackwalkSpeedMultiplier>1</BackwalkSpeedMultiplier>
+      <WalkStrafingSpeedMultiplier>1</WalkStrafingSpeedMultiplier>
+      <CrouchWalkSpeedMultiplier>1</CrouchWalkSpeedMultiplier>
+      <CrouchBackwalkSpeedMultiplier>1</CrouchBackwalkSpeedMultiplier>
+      <CrouchStrafingSpeedMultiplier>1</CrouchStrafingSpeedMultiplier>
+      <AimingSpeedMultiplier>1</AimingSpeedMultiplier>
+      <WeaponType>None</WeaponType>
     </HandItem>
   </HandItems>
 </Definitions>
