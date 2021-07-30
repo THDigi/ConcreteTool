@@ -492,7 +492,8 @@ namespace Digi.ConcreteTool
         {
             placeMatrix.Translation = target;
 
-            var planet = voxelEnt as MyPlanet;
+            MyPlanet planet = voxelEnt as MyPlanet;
+            MatrixD voxMatrix = voxelEnt.WorldMatrix;
 
             bool inputReadable = (InputHandler.IsInputReadable() && MyAPIGateway.Session.ControlledObject == character);
             bool invalidPlacement = false;
@@ -739,8 +740,9 @@ namespace Digi.ConcreteTool
                     else
                         placeMatrix.Translation = target;
 
+                    MatrixD localRotation = placeMatrix * voxelEnt.WorldMatrixInvScaled;
                     Vector3D angles;
-                    MatrixD.GetEulerAnglesXYZ(ref placeMatrix, out angles);
+                    MatrixD.GetEulerAnglesXYZ(ref localRotation, out angles);
 
                     const string Format = "0";
                     SetAlignStatus($"Align: custom [{MathHelperD.ToDegrees(angles.X).ToString(Format)}]° pitch / [{MathHelperD.ToDegrees(angles.Y).ToString(Format)}]° yaw / [{MathHelperD.ToDegrees(angles.Z).ToString(Format)}]° roll", 500, FONTCOLOR_INFO);
@@ -782,9 +784,9 @@ namespace Digi.ConcreteTool
                             {
                                 aligned = false;
 
-                                placeMatrix = MatrixD.Identity;
+                                placeMatrix = voxMatrix;
 
-                                SetAlignStatus("Align: reset (world axis)", 1500, FONTCOLOR_INFO);
+                                SetAlignStatus("Align: reset (to voxel axis)", 1500, FONTCOLOR_INFO);
                             }
                             else
                             {
@@ -890,24 +892,24 @@ namespace Digi.ConcreteTool
                 const float LINE_LENGTH = 4f;
                 const float LINE_LENGTH_HALF = LINE_LENGTH / 2;
 
-                var upHalf = (Vector3D.Up / 2);
-                var rightHalf = (Vector3D.Right / 2);
-                var forwardHalf = (Vector3D.Forward / 2);
+                var upHalf = (voxMatrix.Up / 2);
+                var rightHalf = (voxMatrix.Right / 2);
+                var forwardHalf = (voxMatrix.Forward / 2);
 
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + upHalf + -rightHalf + Vector3D.Forward * LINE_LENGTH_HALF, Vector3.Backward, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + upHalf + rightHalf + Vector3D.Forward * LINE_LENGTH_HALF, Vector3.Backward, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -upHalf + -rightHalf + Vector3D.Forward * LINE_LENGTH_HALF, Vector3.Backward, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -upHalf + rightHalf + Vector3D.Forward * LINE_LENGTH_HALF, Vector3.Backward, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + upHalf + -rightHalf + voxMatrix.Forward * LINE_LENGTH_HALF, voxMatrix.Backward, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + upHalf + rightHalf + voxMatrix.Forward * LINE_LENGTH_HALF, voxMatrix.Backward, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -upHalf + -rightHalf + voxMatrix.Forward * LINE_LENGTH_HALF, voxMatrix.Backward, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -upHalf + rightHalf + voxMatrix.Forward * LINE_LENGTH_HALF, voxMatrix.Backward, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
 
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + forwardHalf + -rightHalf + Vector3D.Up * LINE_LENGTH_HALF, Vector3.Down, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + forwardHalf + rightHalf + Vector3D.Up * LINE_LENGTH_HALF, Vector3.Down, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -forwardHalf + -rightHalf + Vector3D.Up * LINE_LENGTH_HALF, Vector3.Down, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -forwardHalf + rightHalf + Vector3D.Up * LINE_LENGTH_HALF, Vector3.Down, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + forwardHalf + -rightHalf + voxMatrix.Up * LINE_LENGTH_HALF, voxMatrix.Down, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + forwardHalf + rightHalf + voxMatrix.Up * LINE_LENGTH_HALF, voxMatrix.Down, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -forwardHalf + -rightHalf + voxMatrix.Up * LINE_LENGTH_HALF, voxMatrix.Down, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -forwardHalf + rightHalf + voxMatrix.Up * LINE_LENGTH_HALF, voxMatrix.Down, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
 
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + forwardHalf + -upHalf + Vector3D.Right * LINE_LENGTH_HALF, Vector3.Left, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + forwardHalf + upHalf + Vector3D.Right * LINE_LENGTH_HALF, Vector3.Left, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -forwardHalf + -upHalf + Vector3D.Right * LINE_LENGTH_HALF, Vector3.Left, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
-                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -forwardHalf + upHalf + Vector3D.Right * LINE_LENGTH_HALF, Vector3.Left, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + forwardHalf + -upHalf + voxMatrix.Right * LINE_LENGTH_HALF, voxMatrix.Left, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + forwardHalf + upHalf + voxMatrix.Right * LINE_LENGTH_HALF, voxMatrix.Left, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -forwardHalf + -upHalf + voxMatrix.Right * LINE_LENGTH_HALF, voxMatrix.Left, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
+                MyTransparentGeometry.AddLineBillboard(MATERIAL_FADEOUTLINE, gridColor, placeMatrix.Translation + -forwardHalf + upHalf + voxMatrix.Right * LINE_LENGTH_HALF, voxMatrix.Left, LINE_LENGTH, LINE_WIDTH, blendType: BLEND_TYPE);
             }
             else if(snap == 2) // snap to distance increments from center
             {
