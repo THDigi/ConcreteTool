@@ -29,9 +29,9 @@
 [Ctrl+]{0} remove terrain
 [Shift+Scroll] box size
 [Ctrl+Scroll] box distance
-{2}/{3} alignment mode
+{2}/{3} cycle alignments
 [Ctrl+]{2}/{3} lock alignment
-[BlockRotation] rotate box
+[BlockRotation] custom alignment
 {4} snap mode
 [Ctrl+]{4} lock axis/plane/altitude
 {6} show help window</Description>

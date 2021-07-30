@@ -6,7 +6,6 @@ using Sandbox.Definitions;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Character.Components;
-using Sandbox.Game.Gui;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Weapons;
 using VRage;
@@ -17,6 +16,7 @@ using VRage.Game.ModAPI;
 using VRage.Input;
 using VRage.ModAPI;
 using VRage.Utils;
+using VRage.Voxels;
 using VRageMath;
 using BlendTypeEnum = VRageRender.MyBillboard.BlendTypeEnum; // HACK allows the use of BlendTypeEnum which is whitelisted but bypasses accessing MyBillboard which is not whitelisted
 
@@ -47,6 +47,7 @@ namespace Digi.ConcreteTool
         private IMyHudNotification toolStatus = null;
         private IMyHudNotification alignStatus = null;
         private IMyHudNotification snapStatus = null;
+        private IMyHudNotification selectedVoxelStatus = null;
         private IMyVoxelBase selectedVoxelMap = null;
         private int selectedVoxelMapIndex = 0;
         private long prevVoxelMapId = 0;
@@ -74,7 +75,7 @@ namespace Digi.ConcreteTool
 
         private MyVoxelMaterialDefinition material = null;
         private readonly List<MyEntity> highlightEnts = new List<MyEntity>();
-        private readonly List<IMyVoxelBase> maps = new List<IMyVoxelBase>();
+        private readonly List<MyVoxelBase> maps = new List<MyVoxelBase>();
         private readonly StringBuilder sb = new StringBuilder(128);
 
         //private enum PlaceShape { BOX, SPHERE, CAPSULE, RAMP, }
@@ -335,8 +336,7 @@ namespace Digi.ConcreteTool
                     return;
                 }
 
-                var character = MyAPIGateway.Session.ControlledObject as IMyCharacter;
-
+                IMyCharacter character = MyAPIGateway.Session.ControlledObject as IMyCharacter;
                 if(character != null)
                 {
                     HoldingTool(character);
@@ -375,13 +375,13 @@ namespace Digi.ConcreteTool
 
         public void HoldingTool(IMyCharacter character)
         {
-            bool inputReadable = InputHandler.IsInputReadable();
+            bool inputReadable = InputHandler.IsInputReadable() && MyAPIGateway.Session.ControlledObject == character;
             if(inputReadable && MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.SECONDARY_TOOL_ACTION))
             {
                 ChatCommands.ShowHelp();
             }
 
-            // detect and revert aim down sights
+            #region Detect and revert aim down sights
             // the 1st person view check is required to avoid some 3rd person loopback, it still reverts zoom initiated from 3rd person tho
             //if(character.IsInFirstPersonView && MathHelper.ToDegrees(MyAPIGateway.Session.Camera.FovWithZoom) < MyAPIGateway.Session.Camera.FieldOfViewAngle)
             MyCharacterWeaponPositionComponent comp = character.Components.Get<MyCharacterWeaponPositionComponent>();
@@ -391,7 +391,9 @@ namespace Digi.ConcreteTool
                 holdingTool.Shoot(MyShootActionEnum.SecondaryAction, Vector3.Forward, null, null);
                 holdingTool.EndShoot(MyShootActionEnum.SecondaryAction);
             }
+            #endregion Detect and revert aim down sights
 
+            #region VoxelMap Selection
             long prevSelectedVoxelMapId = selectedVoxelMap == null ? 0 : selectedVoxelMap.EntityId;
 
             selectedVoxelMap = null;
@@ -400,9 +402,44 @@ namespace Digi.ConcreteTool
             MatrixD view = character.GetHeadMatrix(false, true);
             target = view.Translation + (view.Forward * placeDistance);
 
-            // find all voxelmaps intersecting with the target position
-            maps.Clear();
-            MyAPIGateway.Session.VoxelMaps.GetInstances(maps, FilterVoxelEntities);
+            if(tick % 30 == 0) // twice a second
+            {
+                // find all voxelmaps intersecting with the target position
+                maps.Clear();
+                BoundingSphereD sphere = new BoundingSphereD(target, 10); // intentionally get in a larger area
+                MyGamePruningStructure.GetAllVoxelMapsInSphere(ref sphere, maps);
+
+                for(int i = (maps.Count - 1); i >= 0; i--)
+                {
+                    MyVoxelBase map = maps[i];
+
+                    // ignore ghost asteroids; planets don't have physics linked directly to entity and asteroids do have physics and they're disabled when in ghost placement mode, but not null.
+                    if(map.StorageName == null || (!(map is MyPlanet) && (map.Physics == null || !map.Physics.Enabled)))
+                    {
+                        maps.RemoveAtFast(i);
+                    }
+                }
+
+                // sort for a consistent selection
+                if(maps.Count > 1)
+                {
+                    maps.SortNoAlloc((a, b) =>
+                    {
+                        int sizeCompare = a.Size.CompareTo(b.Size);
+                        if(sizeCompare == 0)
+                            return a.EntityId.CompareTo(b.EntityId);
+                        else
+                            return sizeCompare;
+                    });
+                }
+            }
+
+            for(int i = (maps.Count - 1); i >= 0; i--)
+            {
+                MyVoxelBase map = maps[i];
+                if(map.MarkedForClose)
+                    maps.RemoveAt(i); // doesn't need to be fast, just needs to not reorder list
+            }
 
             if(maps.Count == 1)
             {
@@ -410,23 +447,39 @@ namespace Digi.ConcreteTool
             }
             else if(maps.Count > 1)
             {
+                if(selectedVoxelStatus == null)
+                    selectedVoxelStatus = MyAPIGateway.Utilities.CreateNotification(string.Empty, 32, FONTCOLOR_CONSTANT);
+
                 if(inputReadable && MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.USE))
+                {
                     selectedVoxelMapIndex++;
+                }
 
                 if(selectedVoxelMapIndex >= maps.Count)
                     selectedVoxelMapIndex = 0;
 
                 selectedVoxelMap = maps[selectedVoxelMapIndex];
 
-                MyAPIGateway.Utilities.ShowNotification($"([{InputHandler.GetAssignedGameControlNames(MyControlsSpace.USE)}]) Selected Voxel Map: {selectedVoxelMap.StorageName} ({(selectedVoxelMapIndex + 1).ToString()} of {maps.Count.ToString()})", 16, MyFontEnum.Blue);
+                string mapName = selectedVoxelMap.StorageName;
+                if(mapName.Length > 16)
+                    mapName = mapName.Substring(0, 16);
+
+                int largestSize = selectedVoxelMap.Storage.Size.AbsMax();
+                if(largestSize >= 1000)
+                    mapName = $"{mapName} / {(largestSize / 1000).ToString()} km3";
+                else
+                    mapName = $"{mapName} / {largestSize.ToString()} m3";
+
+                selectedVoxelStatus.Hide();
+                selectedVoxelStatus.Text = $"([{InputHandler.GetAssignedGameControlNames(MyControlsSpace.USE)}]) Selected Voxel Map: {mapName} ({(selectedVoxelMapIndex + 1).ToString()} of {maps.Count.ToString()})";
+                selectedVoxelStatus.Show();
             }
 
-            if(prevSelectedVoxelMapId != selectedVoxelMap.EntityId)
+            if(selectedVoxelMap != null && prevSelectedVoxelMapId != selectedVoxelMap.EntityId)
             {
                 aligned = true; // so that cycle alignment resets on first press
             }
-
-            maps.Clear();
+            #endregion VoxelMap Selection
 
             bool trigger = inputReadable && MyAPIGateway.Input.IsGameControlPressed(MyControlsSpace.PRIMARY_TOOL_ACTION);
             bool paint = inputReadable && MyAPIGateway.Input.IsGameControlPressed(MyControlsSpace.CUBE_COLOR_CHANGE);
@@ -448,21 +501,6 @@ namespace Digi.ConcreteTool
 
                 ToolProcess(character, selectedVoxelMap, target, view, trigger, paint);
             }
-        }
-
-        private bool FilterVoxelEntities(IMyVoxelBase voxelEnt)
-        {
-            if(voxelEnt.StorageName == null)
-                return false;
-
-            // ignore ghost asteroids
-            // explanation: planets don't have physics linked directly to entity and asteroids do have physics and they're disabled when in ghost placement mode, but not null.
-            if(!(voxelEnt is MyPlanet) && (voxelEnt.Physics == null || !voxelEnt.Physics.Enabled))
-                return false;
-
-            // NOTE: (field)target must be set before using this method!
-            var localTarget = Vector3D.Transform(target, voxelEnt.WorldMatrixInvScaled);
-            return voxelEnt.LocalAABB.Contains(localTarget) == ContainmentType.Contains;
         }
 
         private void SetToolStatus(string text, int aliveTime = 300, string font = FONTCOLOR_INFO)
@@ -508,7 +546,7 @@ namespace Digi.ConcreteTool
             MyPlanet planet = voxelEnt as MyPlanet;
             MatrixD voxMatrix = voxelEnt.WorldMatrix;
 
-            bool inputReadable = (InputHandler.IsInputReadable() && MyAPIGateway.Session.ControlledObject == character);
+            bool inputReadable = InputHandler.IsInputReadable() && MyAPIGateway.Session.ControlledObject == character;
             bool invalidPlacement = false;
             bool removeMode = false;
             bool shift = false;
@@ -981,6 +1019,30 @@ namespace Digi.ConcreteTool
                 if(!snapLock)
                     SetSnapStatus($"Snap: Altitude (current: {altitude.ToString("###,###,###,###,###,##0")}m)", 100, FONTCOLOR_CONSTANT);
             }
+
+            // FIXME: localAABB isn't representative of the placeable voxel area, smaller ones have a larger gap (2m), larger ones have smaller...
+            #region Out of bounds check + draw
+            Vector3D localTarget = Vector3D.Transform(placeMatrix.Translation, voxelEnt.WorldMatrixInvScaled);
+            Vector3D s = Vector3D.Min(voxelEnt.LocalAABB.Max - localTarget, localTarget - voxelEnt.LocalAABB.Min);
+            double distToOutside = Math.Min(s.X, Math.Min(s.Y, s.Z));
+
+            if(distToOutside <= 5)
+            {
+                if(distToOutside <= 0)
+                    invalidPlacement = true;
+
+                float opacity = 1f - (float)MathHelper.Clamp(distToOutside / 5, 0, 1);
+
+                Color color = (distToOutside <= 0 ? Color.Red : Color.Yellow);
+                Color colorLine = color * (0.75f * opacity);
+                Color colorFace = color * (0.25f * opacity);
+
+                MatrixD matrix = voxelEnt.WorldMatrix;
+                BoundingBoxD box = (BoundingBoxD)voxelEnt.LocalAABB;
+                MySimpleObjectDraw.DrawTransparentBox(ref matrix, ref box, ref colorLine, MySimpleObjectRasterizer.Wireframe, 1, 0.01f, MATERIAL_SQUARE, MATERIAL_SQUARE, false, blendType: BLEND_TYPE);
+                MySimpleObjectDraw.DrawTransparentBox(ref matrix, ref box, ref colorFace, MySimpleObjectRasterizer.Solid, 1, 0.01f, MATERIAL_SQUARE, MATERIAL_SQUARE, false, blendType: BLEND_TYPE);
+            }
+            #endregion Out of bounds check + draw
 
             int cooldownTicks = Math.Max((int)(15 * placeScale), 15);
 
