@@ -386,6 +386,8 @@ namespace Digi.ConcreteTool
                 holdingTool.EndShoot(MyShootActionEnum.SecondaryAction);
             }
 
+            long prevSelectedVoxelMapId = selectedVoxelMap == null ? 0 : selectedVoxelMap.EntityId;
+
             selectedVoxelMap = null;
 
             // compute target position
@@ -411,6 +413,11 @@ namespace Digi.ConcreteTool
                 selectedVoxelMap = maps[selectedVoxelMapIndex];
 
                 MyAPIGateway.Utilities.ShowNotification($"([{InputHandler.GetAssignedGameControlNames(MyControlsSpace.USE)}]) Selected Voxel Map: {selectedVoxelMap.StorageName} ({(selectedVoxelMapIndex + 1).ToString()} of {maps.Count.ToString()})", 16, MyFontEnum.Blue);
+            }
+
+            if(prevSelectedVoxelMapId != selectedVoxelMap.EntityId)
+            {
+                aligned = true; // so that cycle alignment resets on first press
             }
 
             maps.Clear();
