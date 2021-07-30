@@ -821,7 +821,9 @@ namespace Digi.ConcreteTool
             if(snap == 1) // snap to voxel grid
             {
                 // required before snap axis lock but its draw is required after
-                placeMatrix.Translation = voxelEnt.PositionLeftBottomCorner + Vector3I.Round(placeMatrix.Translation - voxelEnt.PositionLeftBottomCorner);
+                Vector3 localPos = Vector3D.Transform(placeMatrix.Translation, voxelEnt.WorldMatrixInvScaled);
+                localPos = Vector3.Floor(localPos + MyVoxelConstants.VOXEL_SIZE_VECTOR_HALF);
+                placeMatrix.Translation = Vector3D.Transform(localPos, voxelEnt.WorldMatrix);
             }
 
             if(snapAxisLock) // snapLock AND (no snap OR snap to voxel grid)
