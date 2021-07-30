@@ -90,6 +90,12 @@ namespace Digi.ConcreteTool
         private const float MIN_DISTANCE = 2f;
         private const float MAX_DISTANCE = 6f;
 
+        private const string FONTCOLOR_INFO = MyFontEnum.White;
+        private const string FONTCOLOR_CONSTANT = MyFontEnum.Blue;
+        private const string FONTCOLOR_BAD = MyFontEnum.Red;
+
+        private const float GRID_COLOR_ALPHA = 0.6f;
+
         public const float TOOL_ACTION_MAX_DIST_SQ = 200 * 200; // distance at which player must be from origin to get the sound+particle packet
 
         public const string CONCRETE_MATERIAL = "Concrete";
@@ -315,9 +321,10 @@ namespace Digi.ConcreteTool
                     else
                     {
                         selectedVoxelMapTicks--;
-                        var matrix = selectedVoxelMap.WorldMatrix;
-                        var box = (BoundingBoxD)selectedVoxelMap.LocalAABB;
-                        var color = Color.Green * MathHelper.Lerp(0f, 0.5f, ((float)selectedVoxelMapTicks / (float)HIGHLIGHT_VOXELMAP_MAXTICKS));
+
+                        MatrixD matrix = selectedVoxelMap.WorldMatrix;
+                        BoundingBoxD box = (BoundingBoxD)selectedVoxelMap.LocalAABB;
+                        Color color = Color.Green * MathHelper.Lerp(0f, 0.5f, ((float)selectedVoxelMapTicks / (float)HIGHLIGHT_VOXELMAP_MAXTICKS));
                         MySimpleObjectDraw.DrawTransparentBox(ref matrix, ref box, ref color, MySimpleObjectRasterizer.Wireframe, 1, 0.01f, MATERIAL_SQUARE, MATERIAL_SQUARE, false, blendType: BLEND_TYPE);
                     }
                 }
@@ -351,11 +358,11 @@ namespace Digi.ConcreteTool
                 MyFixedPoint addCost = Utils.GetAmmoUsage(VoxelActionEnum.ADD_VOXEL, placeScale);
                 MyFixedPoint paintCost = Utils.GetAmmoUsage(VoxelActionEnum.PAINT_VOXEL, placeScale);
 
-                SetToolStatus($"Add concrete cost: {addCost.ToString()} / Replace cost: {paintCost.ToString()}", 1500, MyFontEnum.White);
+                SetToolStatus($"Add concrete cost: {addCost.ToString()} / Replace cost: {paintCost.ToString()}", 1500, FONTCOLOR_INFO);
             }
             else if(!SeenHelp && (MyAPIGateway.Session?.Config?.HudState ?? 1) != 1) // only show if hud is not in hints mode
             {
-                SetToolStatus($"Press {InputHandler.GetAssignedGameControlNames(MyControlsSpace.SECONDARY_TOOL_ACTION)} to see Concrete Tool help window.", 1500, MyFontEnum.White);
+                SetToolStatus($"Press {InputHandler.GetAssignedGameControlNames(MyControlsSpace.SECONDARY_TOOL_ACTION)} to see Concrete Tool help window.", 1500, FONTCOLOR_INFO);
             }
         }
 
@@ -369,7 +376,6 @@ namespace Digi.ConcreteTool
         public void HoldingTool(IMyCharacter character)
         {
             bool inputReadable = InputHandler.IsInputReadable();
-
             if(inputReadable && MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.SECONDARY_TOOL_ACTION))
             {
                 ChatCommands.ShowHelp();
@@ -378,7 +384,7 @@ namespace Digi.ConcreteTool
             // detect and revert aim down sights
             // the 1st person view check is required to avoid some 3rd person loopback, it still reverts zoom initiated from 3rd person tho
             //if(character.IsInFirstPersonView && MathHelper.ToDegrees(MyAPIGateway.Session.Camera.FovWithZoom) < MyAPIGateway.Session.Camera.FieldOfViewAngle)
-            var comp = character.Components.Get<MyCharacterWeaponPositionComponent>();
+            MyCharacterWeaponPositionComponent comp = character.Components.Get<MyCharacterWeaponPositionComponent>();
             if(comp.IsInIronSight)
             {
                 holdingTool.EndShoot(MyShootActionEnum.SecondaryAction);
@@ -391,7 +397,7 @@ namespace Digi.ConcreteTool
             selectedVoxelMap = null;
 
             // compute target position
-            var view = character.GetHeadMatrix(false, true);
+            MatrixD view = character.GetHeadMatrix(false, true);
             target = view.Translation + (view.Forward * placeDistance);
 
             // find all voxelmaps intersecting with the target position
@@ -429,7 +435,7 @@ namespace Digi.ConcreteTool
             {
                 if(trigger || paint)
                 {
-                    SetToolStatus("Concrete can only be placed on planets or asteroids!", 1500, MyFontEnum.Red);
+                    SetToolStatus("Concrete can only be placed on planets or asteroids!", 1500, FONTCOLOR_BAD);
                 }
             }
             else
@@ -459,7 +465,7 @@ namespace Digi.ConcreteTool
             return voxelEnt.LocalAABB.Contains(localTarget) == ContainmentType.Contains;
         }
 
-        private void SetToolStatus(string text, int aliveTime = 300, string font = MyFontEnum.White)
+        private void SetToolStatus(string text, int aliveTime = 300, string font = FONTCOLOR_INFO)
         {
             if(toolStatus == null)
                 toolStatus = MyAPIGateway.Utilities.CreateNotification("", aliveTime, font);
@@ -471,7 +477,7 @@ namespace Digi.ConcreteTool
             toolStatus.Show();
         }
 
-        private void SetAlignStatus(string text, int aliveTime = 300, string font = MyFontEnum.White)
+        private void SetAlignStatus(string text, int aliveTime = 300, string font = FONTCOLOR_INFO)
         {
             if(alignStatus == null)
                 alignStatus = MyAPIGateway.Utilities.CreateNotification("", aliveTime, font);
@@ -483,7 +489,7 @@ namespace Digi.ConcreteTool
             alignStatus.Show();
         }
 
-        private void SetSnapStatus(string text, int aliveTime = 300, string font = MyFontEnum.White)
+        private void SetSnapStatus(string text, int aliveTime = 300, string font = FONTCOLOR_INFO)
         {
             if(snapStatus == null)
                 snapStatus = MyAPIGateway.Utilities.CreateNotification("", aliveTime, font);
@@ -509,10 +515,6 @@ namespace Digi.ConcreteTool
             bool ctrl = false;
             bool alt = false;
             bool snapAxisLock = snapLock && (snap == 0 || snap == 1);
-
-            const string FONTCOLOR_INFO = MyFontEnum.White;
-            const string FONTCOLOR_CONSTANT = MyFontEnum.Blue;
-            const float GRID_COLOR_ALPHA = 0.6f;
 
             if(inputReadable)
             {
@@ -708,34 +710,34 @@ namespace Digi.ConcreteTool
                     if(snapAxisLock)
                         placeMatrix.Translation = Vector3D.Zero;
 
-                    var cameraMatrix = MyAPIGateway.Session.Camera.WorldMatrix;
+                    MatrixD cameraMatrix = MyAPIGateway.Session.Camera.WorldMatrix;
 
                     if(rotateInput.X != 0)
                     {
-                        var rotateWorld = Vector3.TransformNormal(new Vector3(-rotateInput.X, 0, 0), cameraMatrix);
-                        var dir = placeMatrix.GetClosestDirection(rotateWorld);
-                        var axis = placeMatrix.GetDirectionVector(dir);
-                        var m = MatrixD.CreateFromAxisAngle(axis, angleRad);
+                        Vector3D rotateWorld = Vector3D.TransformNormal(new Vector3D(-rotateInput.X, 0, 0), cameraMatrix);
+                        Base6Directions.Direction dir = placeMatrix.GetClosestDirection(rotateWorld);
+                        Vector3D axis = placeMatrix.GetDirectionVector(dir);
+                        MatrixD m = MatrixD.CreateFromAxisAngle(axis, angleRad);
                         m.Translation = Vector3D.Zero;
                         placeMatrix *= m;
                     }
 
                     if(rotateInput.Y != 0)
                     {
-                        var rotateWorld = Vector3.TransformNormal(new Vector3(0, -rotateInput.Y, 0), cameraMatrix);
-                        var dir = placeMatrix.GetClosestDirection(rotateWorld);
-                        var axis = placeMatrix.GetDirectionVector(dir);
-                        var m = MatrixD.CreateFromAxisAngle(axis, angleRad);
+                        Vector3D rotateWorld = Vector3D.TransformNormal(new Vector3D(0, -rotateInput.Y, 0), cameraMatrix);
+                        Base6Directions.Direction dir = placeMatrix.GetClosestDirection(rotateWorld);
+                        Vector3D axis = placeMatrix.GetDirectionVector(dir);
+                        MatrixD m = MatrixD.CreateFromAxisAngle(axis, angleRad);
                         m.Translation = Vector3D.Zero;
                         placeMatrix *= m;
                     }
 
                     if(rotateInput.Z != 0)
                     {
-                        var rotateWorld = Vector3.TransformNormal(new Vector3(0, 0, rotateInput.Z), cameraMatrix);
-                        var dir = placeMatrix.GetClosestDirection(rotateWorld);
-                        var axis = placeMatrix.GetDirectionVector(dir);
-                        var m = MatrixD.CreateFromAxisAngle(axis, angleRad);
+                        Vector3D rotateWorld = Vector3D.TransformNormal(new Vector3D(0, 0, rotateInput.Z), cameraMatrix);
+                        Base6Directions.Direction dir = placeMatrix.GetClosestDirection(rotateWorld);
+                        Vector3D axis = placeMatrix.GetDirectionVector(dir);
+                        MatrixD m = MatrixD.CreateFromAxisAngle(axis, angleRad);
                         m.Translation = Vector3D.Zero;
                         placeMatrix *= m;
                     }
@@ -769,7 +771,7 @@ namespace Digi.ConcreteTool
                         SetAlignStatus("Align: [aimed ship]", 1500, FONTCOLOR_INFO);
 
                         if(ctrl)
-                            MyAPIGateway.Utilities.ShowNotification($"NOTE: Ctrl+{InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT, true)} when aiming at a ship doesn't lock alignment to it!", 3000, MyFontEnum.Red);
+                            MyAPIGateway.Utilities.ShowNotification($"NOTE: Ctrl+{InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT, true)} when aiming at a ship doesn't lock alignment to it!", 3000, FONTCOLOR_CONSTANT);
 
                         Utils.PlayLocalSound(SOUND_HUD_ITEM);
                     }
@@ -854,7 +856,8 @@ namespace Digi.ConcreteTool
                         break;
                 }
 
-                if(Vector3D.DistanceSquared(target, placeMatrix.Translation) > 3 * 3)
+                bool tooFar = Vector3D.DistanceSquared(target, placeMatrix.Translation) > 3 * 3;
+                if(tooFar)
                 {
                     if(!soundPlayed_Unable)
                     {
@@ -864,10 +867,10 @@ namespace Digi.ConcreteTool
 
                     invalidPlacement = true;
 
-                    SetSnapStatus("Snap Lock: Aim closer!", 100, MyFontEnum.Red);
+                    SetSnapStatus("Snap Lock: Aim closer!", 100, FONTCOLOR_BAD);
                 }
 
-                var color = (invalidPlacement ? Color.Red : Color.Blue) * (snapAxis > 3 ? 0.3f : 0.8f);
+                Color color = (tooFar ? Color.Red : Color.Blue) * (snapAxis > 3 ? 0.3f : 0.8f);
 
                 switch(snapAxis)
                 {
@@ -930,7 +933,8 @@ namespace Digi.ConcreteTool
                     if(altitudeLock == int.MinValue)
                         altitudeLock = altitude;
 
-                    if(Math.Abs(altitude - altitudeLock) > 3)
+                    bool tooFar = Math.Abs(altitude - altitudeLock) > 3;
+                    if(tooFar)
                     {
                         if(!soundPlayed_Unable)
                         {
@@ -943,8 +947,8 @@ namespace Digi.ConcreteTool
 
                     placeMatrix.Translation = center + (dir * altitudeLock);
 
-                    if(invalidPlacement)
-                        SetSnapStatus($"Snap Lock: Altitude at {altitudeLock.ToString("###,###,###,###,###,##0")}m - Aim closer!", 100, MyFontEnum.Red);
+                    if(tooFar)
+                        SetSnapStatus($"Snap Lock: Altitude at {altitudeLock.ToString("###,###,###,###,###,##0")}m - Aim closer!", 100, FONTCOLOR_BAD);
                     else
                         SetSnapStatus($"Snap Lock: Altitude at {altitudeLock.ToString("###,###,###,###,###,##0")}m", 100, FONTCOLOR_CONSTANT);
                 }
@@ -978,9 +982,9 @@ namespace Digi.ConcreteTool
 
             int cooldownTicks = Math.Max((int)(15 * placeScale), 15);
 
-            var shape = Session.VoxelMaps.GetBoxVoxelHand();
-            var vec = (Vector3D.One / 2) * placeScale;
-            var bb = new BoundingBoxD(-vec, vec);
+            IMyVoxelShapeBox shape = Session.VoxelMaps.GetBoxVoxelHand();
+            Vector3D vec = (Vector3D.One / 2) * placeScale;
+            BoundingBoxD bb = new BoundingBoxD(-vec, vec);
             shape.Boundaries = bb;
             shape.Transform = placeMatrix;
 
@@ -1003,7 +1007,7 @@ namespace Digi.ConcreteTool
                 if(useItems > 0 && character.GetInventory(0).GetItemAmount(CONCRETE_MAG_DEFID) < useItems)
                 {
                     Utils.PlayLocalSound(SOUND_HUD_UNABLE, SOUND_HUD_UNABLE_VOLUME, SOUND_HUD_UNABLE_TIMEOUT);
-                    SetToolStatus($"{useItems.ToString()}x [Concrete Mix] needed!", 1500, MyFontEnum.Red);
+                    SetToolStatus($"{useItems.ToString()}x [Concrete Mix] needed!", 1500, FONTCOLOR_BAD);
                     return false;
                 }
             }
@@ -1029,7 +1033,7 @@ namespace Digi.ConcreteTool
                     {
                         int percent = (int)(((float)holdPress / (float)RemoveTargeTicks) * 100f);
 
-                        SetToolStatus($"Removing {percent.ToString()}%...", 100, MyFontEnum.Red);
+                        SetToolStatus($"Removing {percent.ToString()}%...", 160, FONTCOLOR_BAD);
                     }
 
                     if(holdPress >= RemoveTargeTicks)
@@ -1039,6 +1043,8 @@ namespace Digi.ConcreteTool
 
                         VoxelAction(VoxelActionEnum.REMOVE_VOXEL, voxelEnt, shape, placeScale, Session.Player.Character);
                         ToolAction(VoxelActionEnum.REMOVE_VOXEL, Session.Player.Character, placeScale, shape.Transform.Translation);
+
+                        SetToolStatus("Removed!", 1000, FONTCOLOR_BAD);
                     }
                 }
                 else
@@ -1077,7 +1083,7 @@ namespace Digi.ConcreteTool
 
                         if(entitiesBlocking == 0)
                         {
-                            SetToolStatus("You're in the way!", 1500, MyFontEnum.Red);
+                            SetToolStatus("You're in the way!", 1500, FONTCOLOR_BAD);
                         }
                         else
                         {
@@ -1093,7 +1099,7 @@ namespace Digi.ConcreteTool
 
                             sb.Append(localCharBlocking || entitiesBlocking > 1 ? "are" : "is").Append(" in the way!");
 
-                            SetToolStatus(sb.ToString(), 1500, MyFontEnum.Red);
+                            SetToolStatus(sb.ToString(), 1500, FONTCOLOR_BAD);
                         }
 
                         highlightEntsTicks = 0; // reset fadeout timer
