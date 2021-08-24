@@ -13,6 +13,27 @@ namespace Digi
             return !Gui.IsCursorVisible && !Gui.ChatEntryVisible;
         }
 
+        /// <summary>
+        /// Reads the bound button or key from the given control to bypass control blocking.
+        /// </summary>
+        public static bool IsControlPressedIgnoreBlock(MyStringId controlId, bool newPress = false)
+        {
+            IMyControl control = Input.GetGameControl(controlId);
+
+            if(newPress)
+            {
+                return Input.IsNewMousePressed(control.GetMouseControl())
+                    || Input.IsNewKeyPressed(control.GetKeyboardControl())
+                    || Input.IsNewKeyPressed(control.GetSecondKeyboardControl());
+            }
+            else
+            {
+                return Input.IsMousePressed(control.GetMouseControl())
+                    || Input.IsKeyPress(control.GetKeyboardControl())
+                    || Input.IsKeyPress(control.GetSecondKeyboardControl());
+            }
+        }
+
         public static string GetAssignedGameControlNames(MyStringId controlId, bool oneResult = false)
         {
             return GetAssignedGameControlNames(Input.GetGameControl(controlId), oneResult);

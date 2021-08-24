@@ -482,7 +482,7 @@ namespace Digi.ConcreteTool
             #endregion VoxelMap Selection
 
             bool trigger = inputReadable && MyAPIGateway.Input.IsGameControlPressed(MyControlsSpace.PRIMARY_TOOL_ACTION);
-            bool paint = inputReadable && MyAPIGateway.Input.IsGameControlPressed(MyControlsSpace.CUBE_COLOR_CHANGE);
+            bool paint = inputReadable && InputHandler.IsControlPressedIgnoreBlock(MyControlsSpace.CUBE_COLOR_CHANGE);
 
             if(selectedVoxelMap == null)
             {
