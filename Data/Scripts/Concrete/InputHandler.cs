@@ -20,18 +20,38 @@ namespace Digi
         {
             IMyControl control = Input.GetGameControl(controlId);
 
+            // WARNING: IsKeyPress(MyKeys.None) returns true for some people!
+
             if(newPress)
             {
-                return Input.IsNewMousePressed(control.GetMouseControl())
-                    || Input.IsNewKeyPressed(control.GetKeyboardControl())
-                    || Input.IsNewKeyPressed(control.GetSecondKeyboardControl());
+                MyMouseButtonsEnum button = control.GetMouseControl();
+                if(button != MyMouseButtonsEnum.None && Input.IsNewMousePressed(button))
+                    return true;
+
+                MyKeys kb1 = control.GetKeyboardControl();
+                if(kb1 != MyKeys.None && Input.IsNewKeyPressed(kb1))
+                    return true;
+
+                MyKeys kb2 = control.GetSecondKeyboardControl();
+                if(kb2 != MyKeys.None && Input.IsNewKeyPressed(kb2))
+                    return true;
             }
             else
             {
-                return Input.IsMousePressed(control.GetMouseControl())
-                    || Input.IsKeyPress(control.GetKeyboardControl())
-                    || Input.IsKeyPress(control.GetSecondKeyboardControl());
+                MyMouseButtonsEnum button = control.GetMouseControl();
+                if(button != MyMouseButtonsEnum.None && Input.IsMousePressed(button))
+                    return true;
+
+                MyKeys kb1 = control.GetKeyboardControl();
+                if(kb1 != MyKeys.None && Input.IsKeyPress(kb1))
+                    return true;
+
+                MyKeys kb2 = control.GetSecondKeyboardControl();
+                if(kb2 != MyKeys.None && Input.IsKeyPress(kb2))
+                    return true;
             }
+
+            return false;
         }
 
         public static string GetAssignedGameControlNames(MyStringId controlId, bool oneResult = false)
