@@ -31,11 +31,18 @@
         <SpeedVariance>0</SpeedVariance>
         <MaxTrajectory>0</MaxTrajectory>
         <BackkickForce>0.0</BackkickForce>
+        <ExplosiveDamageMultiplier>0</ExplosiveDamageMultiplier>
       </BasicProperties>
       <ProjectileProperties>
-        <ProjectileHitImpulse>0.0</ProjectileHitImpulse>
+        <ProjectileType>Bullet</ProjectileType>
+        <ProjectileHitImpulse>0</ProjectileHitImpulse>
         <ProjectileMassDamage>0</ProjectileMassDamage>
         <ProjectileHealthDamage>0</ProjectileHealthDamage>
+        <ProjectileTrailScale>0</ProjectileTrailScale>
+        <ProjectileTrailColor x="0" y="0" z="0" />
+        <ProjectileTrailProbability>0</ProjectileTrailProbability>
+        <ProjectileOnHitMaterialParticlesType>Small</ProjectileOnHitMaterialParticlesType>
+        <ProjectileOnHitParticlesType>BasicSmall</ProjectileOnHitParticlesType>
       </ProjectileProperties>
     </Ammo>
   </Ammos>
