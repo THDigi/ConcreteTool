@@ -37,10 +37,10 @@
 
     <!-- basic assembler -->
     <Entry Class="Tools" BlueprintSubtypeId="Blueprint_ConcreteTool" />
-    <Entry Class="Consumables" BlueprintSubtypeId="Blueprint_ConcreteMix" />
+    <Entry Class="Tools" BlueprintSubtypeId="Blueprint_ConcreteMix" />
 
     <!-- assembler (2x1x1) -->
     <Entry Class="EliteTools" BlueprintSubtypeId="Blueprint_ConcreteTool" />
-    <Entry Class="EliteConsumables" BlueprintSubtypeId="Blueprint_ConcreteMix" />
+    <Entry Class="EliteTools" BlueprintSubtypeId="Blueprint_ConcreteMix" />
   </BlueprintClassEntries>
 </Definitions>
