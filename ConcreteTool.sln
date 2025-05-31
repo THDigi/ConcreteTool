@@ -7,19 +7,19 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConcreteTool", "ConcreteToo
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Release|Any CPU = Release|Any CPU
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{4C6F8A88-EE29-47CD-9978-FB5AFB94C254}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4C6F8A88-EE29-47CD-9978-FB5AFB94C254}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4C6F8A88-EE29-47CD-9978-FB5AFB94C254}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4C6F8A88-EE29-47CD-9978-FB5AFB94C254}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C6F8A88-EE29-47CD-9978-FB5AFB94C254}.Debug|x64.ActiveCfg = Debug|x64
+		{4C6F8A88-EE29-47CD-9978-FB5AFB94C254}.Debug|x64.Build.0 = Debug|x64
+		{4C6F8A88-EE29-47CD-9978-FB5AFB94C254}.Release|x64.ActiveCfg = Release|x64
+		{4C6F8A88-EE29-47CD-9978-FB5AFB94C254}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {6E1FE242-7C58-4B38-90BD-72AB5F74DF3F}
+		SolutionGuid = {20F6A5E1-11CE-4CB2-B423-79F09A594490}
 	EndGlobalSection
 EndGlobal
