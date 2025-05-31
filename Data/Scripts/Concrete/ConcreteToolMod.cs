@@ -643,7 +643,7 @@ namespace Digi.ConcreteTool
                 #region Input: snapping
                 if(InputHandler.IsControlJustPressed(MyControlsSpace.FREE_ROTATION))
                 {
-                    if(!ctrl)
+                    if(!shift)
                     {
                         snapLock = false;
                         snapAxis = 0;

@@ -33,7 +33,7 @@
 [Ctrl+]{2}/{3} lock alignment
 [BlockRotation] custom alignment
 {4} snap mode
-[Ctrl+]{4} lock axis/plane/altitude
+[Shift+]{4} lock axis/plane/altitude
 {6} show help window</Description>
       <DescriptionArgs>PRIMARY_TOOL_ACTION,CUBE_COLOR_CHANGE,CUBE_BUILDER_CUBESIZE_MODE,CUBE_DEFAULT_MOUNTPOINT,FREE_ROTATION,USE,SECONDARY_TOOL_ACTION</DescriptionArgs>
       <Icon>Textures\Icons\Tool.dds</Icon>

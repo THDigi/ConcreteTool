@@ -83,7 +83,7 @@ namespace Digi.ConcreteTool
             str.AppendLine();
             str.Append(inputSnap).Append(" = cycles snap mode: no snap / snap voxel grid / snap to altitude.").AppendLine();
             str.AppendLine();
-            str.Append("Ctrl+").Append(inputSnap).Append(" = depending on snap mode: lock to axis/plane / lock to altitude.").AppendLine();
+            str.Append("Shift+").Append(inputSnap).Append(" = lock to axis/plane/altitude.").AppendLine();
             str.AppendLine();
             str.Append(string.Join(",", inputsRotation)).Append(" = rotate the box.").AppendLine();
             str.AppendLine("  ...+Alt = rotate 1 degree increments.");
