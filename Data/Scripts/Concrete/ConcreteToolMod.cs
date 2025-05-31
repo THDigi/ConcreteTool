@@ -376,7 +376,7 @@ namespace Digi.ConcreteTool
         public void HoldingTool(IMyCharacter character)
         {
             bool inputReadable = InputHandler.IsInputReadable() && MyAPIGateway.Session.ControlledObject == character;
-            if(inputReadable && MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.SECONDARY_TOOL_ACTION))
+            if(inputReadable && InputHandler.IsControlJustPressed(MyControlsSpace.SECONDARY_TOOL_ACTION))
             {
                 ChatCommands.ShowHelp();
             }
@@ -450,7 +450,7 @@ namespace Digi.ConcreteTool
                 if(selectedVoxelStatus == null)
                     selectedVoxelStatus = MyAPIGateway.Utilities.CreateNotification(string.Empty, 32, FONTCOLOR_CONSTANT);
 
-                if(inputReadable && MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.USE))
+                if(inputReadable && InputHandler.IsControlJustPressed(MyControlsSpace.USE))
                 {
                     selectedVoxelMapIndex++;
                 }
@@ -481,7 +481,7 @@ namespace Digi.ConcreteTool
             }
             #endregion VoxelMap Selection
 
-            bool trigger = inputReadable && MyAPIGateway.Input.IsGameControlPressed(MyControlsSpace.PRIMARY_TOOL_ACTION);
+            bool trigger = inputReadable && InputHandler.IsControlPressed(MyControlsSpace.PRIMARY_TOOL_ACTION);
             bool paint = inputReadable && InputHandler.IsControlPressedIgnoreBlock(MyControlsSpace.CUBE_COLOR_CHANGE);
 
             if(selectedVoxelMap == null)
@@ -562,7 +562,7 @@ namespace Digi.ConcreteTool
                 removeMode = ctrl;
 
                 // prevent align-to-default from changing for cubebuilder when using this bind
-                bool pressedCubeDefaultMountpoint = MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT);
+                bool pressedCubeDefaultMountpoint = InputHandler.IsControlJustPressed(MyControlsSpace.CUBE_DEFAULT_MOUNTPOINT);
                 if(pressedCubeDefaultMountpoint)
                 {
                     MyCubeBuilder.Static.AlignToDefault = CubeBuilderAlignMode;
@@ -641,7 +641,7 @@ namespace Digi.ConcreteTool
                 #endregion Input: scroll (distance/scale)
 
                 #region Input: snapping
-                if(MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.FREE_ROTATION))
+                if(InputHandler.IsControlJustPressed(MyControlsSpace.FREE_ROTATION))
                 {
                     if(!ctrl)
                     {
@@ -797,7 +797,7 @@ namespace Digi.ConcreteTool
                 #endregion Input: custom alignment
 
                 #region Input: alignment
-                if(pressedCubeDefaultMountpoint || MyAPIGateway.Input.IsNewGameControlPressed(MyControlsSpace.CUBE_BUILDER_CUBESIZE_MODE))
+                if(pressedCubeDefaultMountpoint || InputHandler.IsControlJustPressed(MyControlsSpace.CUBE_BUILDER_CUBESIZE_MODE))
                 {
                     IMyCubeGrid grid = MyAPIGateway.CubeBuilder.FindClosestGrid();
                     if(grid != null)

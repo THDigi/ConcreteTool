@@ -95,5 +95,57 @@ namespace Digi
 
             return (oneResult || inputs.Count == 0 ? "{Unassigned:" + control.GetControlName() + "}" : string.Join(" or ", inputs));
         }
+
+        /// <summary>
+        /// Quick and dirty replacement for <see cref="IMyInput.IsGameControlPressed(MyStringId)"/>.
+        /// </summary>
+        public static bool IsControlPressed(MyStringId controlId)
+        {
+            IMyControl control = Input.GetGameControl(controlId);
+
+            if(control == null)
+                return false;
+
+#if VERSION_200 || VERSION_201 || VERSION_202 || VERSION_203 || VERSION_204 || VERSION_205 // some backwards compatibility
+            return control.IsPressed();
+#else
+            bool origEnabled = control.IsEnabled;
+            try
+            {
+                control.IsEnabled = true;
+                return control.IsPressed();
+            }
+            finally
+            {
+                control.IsEnabled = origEnabled;
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Quick and dirty replacement for <see cref="IMyInput.IsNewGameControlPressed(MyStringId)"/>.
+        /// </summary>
+        public static bool IsControlJustPressed(MyStringId controlId)
+        {
+            IMyControl control = Input.GetGameControl(controlId);
+
+            if(control == null)
+                return false;
+
+#if VERSION_200 || VERSION_201 || VERSION_202 || VERSION_203 || VERSION_204 || VERSION_205 // some backwards compatibility
+            return control.IsNewPressed();
+#else
+            bool origEnabled = control.IsEnabled;
+            try
+            {
+                control.IsEnabled = true;
+                return control.IsNewPressed();
+            }
+            finally
+            {
+                control.IsEnabled = origEnabled;
+            }
+#endif
+        }
     }
 }
