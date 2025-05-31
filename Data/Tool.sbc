@@ -23,19 +23,7 @@
         <SubtypeId>PhysicalConcreteTool</SubtypeId>
       </Id>
       <DisplayName>Concrete Tool</DisplayName>
-      <Description>Places concrete on asteroids and planets.
-{0} add concrete
-{1} replace with concrete
-[Ctrl+]{0} remove terrain
-[Shift+Scroll] box size
-[Ctrl+Scroll] box distance
-{2}/{3} cycle alignments
-[Ctrl+]{2}/{3} lock alignment
-[BlockRotation] custom alignment
-{4} snap mode
-[Shift+]{4} lock axis/plane/altitude
-{6} show help window</Description>
-      <DescriptionArgs>PRIMARY_TOOL_ACTION,CUBE_COLOR_CHANGE,CUBE_BUILDER_CUBESIZE_MODE,CUBE_DEFAULT_MOUNTPOINT,FREE_ROTATION,USE,SECONDARY_TOOL_ACTION</DescriptionArgs>
+      <Description>ERROR: Script did not replace this, failed to compile?</Description>
       <Icon>Textures\Icons\Tool.dds</Icon>
       <Size>
         <X>0.45</X>

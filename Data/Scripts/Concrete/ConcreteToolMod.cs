@@ -76,7 +76,9 @@ namespace Digi.ConcreteTool
         private MyVoxelMaterialDefinition material = null;
         private readonly List<MyEntity> highlightEnts = new List<MyEntity>();
         private readonly List<MyVoxelBase> maps = new List<MyVoxelBase>();
-        private readonly StringBuilder sb = new StringBuilder(128);
+        private readonly StringBuilder sb = new StringBuilder(512);
+
+        MyPhysicalItemDefinition ToolPhysItemDef;
 
         //private enum PlaceShape { BOX, SPHERE, CAPSULE, RAMP, }
 
@@ -104,8 +106,10 @@ namespace Digi.ConcreteTool
         public const string CONCRETE_WEAPON_ID = "WeaponConcreteTool";
         public const string CONCRETE_AMMO_ID = "ConcreteMix";
         public const string CONCRETE_GHOST_ID = "ConcreteToolGhost";
-        private readonly MyObjectBuilder_AmmoMagazine CONCRETE_MAG = new MyObjectBuilder_AmmoMagazine() { SubtypeName = CONCRETE_AMMO_ID, ProjectilesCount = 1 };
-        private readonly MyDefinitionId CONCRETE_MAG_DEFID = new MyDefinitionId(typeof(MyObjectBuilder_AmmoMagazine), CONCRETE_AMMO_ID);
+        readonly MyDefinitionId CONCRETE_TOOLITEM_ID = new MyDefinitionId(typeof(MyObjectBuilder_PhysicalGunObject), "PhysicalConcreteTool");
+
+        readonly MyObjectBuilder_AmmoMagazine CONCRETE_MAG = new MyObjectBuilder_AmmoMagazine() { SubtypeName = CONCRETE_AMMO_ID, ProjectilesCount = 1 };
+        readonly MyDefinitionId CONCRETE_MAG_DEFID = new MyDefinitionId(typeof(MyObjectBuilder_AmmoMagazine), CONCRETE_AMMO_ID);
 
         private static readonly MyStringId MATERIAL_SQUARE = MyStringId.GetOrCompute("ConcreteTool_Square");
         private static readonly MyStringId MATERIAL_FADEOUTLINE = MyStringId.GetOrCompute("ConcreteTool_FadeOutLine");
@@ -142,8 +146,15 @@ namespace Digi.ConcreteTool
 
             if(material == null && !MyDefinitionManager.Static.TryGetVoxelMaterialDefinition(CONCRETE_MATERIAL, out material))
             {
-                throw new Exception($"ERROR: Could not get the '{CONCRETE_MATERIAL}' voxel material!");
+                throw new Exception($"could not find the '{CONCRETE_MATERIAL}' voxel material!");
             }
+
+            if(!MyDefinitionManager.Static.TryGetPhysicalItemDefinition(CONCRETE_TOOLITEM_ID, out ToolPhysItemDef))
+            {
+                throw new Exception($"could not find the '{CONCRETE_TOOLITEM_ID}' physical item!");
+            }
+
+            RefreshToolDescription();
 
             Network.Register();
             ChatCommands.Register();
@@ -174,6 +185,32 @@ namespace Digi.ConcreteTool
             Instance = null;
             material = null;
             Log.Close();
+        }
+
+        void RefreshToolDescription()
+        {
+            ToolPhysItemDef.DescriptionEnum = null;
+            ToolPhysItemDef.DescriptionArgs = null;
+
+            sb.Clear();
+
+            sb.Append("Places concrete voxels.").Append('\n');
+
+            var inputPlace = InputHandler.GetAssignedGameControlNames(MyControlsSpace.PRIMARY_TOOL_ACTION);
+            var inputPaint = InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_COLOR_CHANGE);
+            var inputHelp = InputHandler.GetAssignedGameControlNames(MyControlsSpace.SECONDARY_TOOL_ACTION);
+            var inputAlign = InputHandler.GetAssignedGameControlNames(MyControlsSpace.CUBE_BUILDER_CUBESIZE_MODE);
+            var inputSnap = InputHandler.GetAssignedGameControlNames(MyControlsSpace.FREE_ROTATION, true);
+
+            sb.Append(inputPlace).Append(": place (+Ctrl to delete)").Append('\n');
+            sb.Append(inputPaint).Append(": replace").Append('\n');
+            sb.Append("Ctrl/Shift+Scroll: resize/distance").Append('\n');
+            sb.Append(inputAlign).Append(": align (+Ctrl to lock)").Append('\n');
+            sb.Append(inputSnap).Append(": snap (+Shift to lock)").Append('\n');
+            sb.Append("Block rotation: rotate shape/planes\n");
+            sb.Append(inputHelp).Append(": more keybinds and info").Append('\n');
+
+            ToolPhysItemDef.DescriptionString = sb.ToString();
         }
 
         /// <summary>
@@ -352,6 +389,8 @@ namespace Digi.ConcreteTool
         {
             holdingTool = gun;
             CubeBuilderAlignMode = MyCubeBuilder.Static.AlignToDefault;
+
+            RefreshToolDescription();
 
             if(placeScale > 1f)
             {
