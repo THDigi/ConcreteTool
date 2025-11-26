@@ -18,6 +18,7 @@
       <Model>Models\ConcreteMix.mwm</Model>
       <Capacity>1</Capacity>
       <AmmoDefinitionId Subtype="ConcreteDull" />
+      <DepositAllEnabled>false</DepositAllEnabled>
     </AmmoMagazine>
   </AmmoMagazines>
   <Ammos>

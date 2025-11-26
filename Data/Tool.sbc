@@ -35,6 +35,7 @@
       <Model>Models\ConcreteTool.mwm</Model>
       <WeaponDefinitionId Subtype="WeaponConcreteTool" />
       <ShowAmmoCount>true</ShowAmmoCount>
+      <DepositAllEnabled>false</DepositAllEnabled>
     </PhysicalItem>
   </PhysicalItems>
   <HandItems>
